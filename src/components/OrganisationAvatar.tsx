@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import { organisationFaviconUrl } from '../organisationFavicon';
 
 const sizeClassName = {
@@ -29,16 +29,23 @@ export const OrganisationAvatar = ({
   const [shown, setShown] = useState(false);
   const box = sizeClassName[size];
 
+  useEffect(() => {
+    setFailed(false);
+    setShown(false);
+  }, [src]);
+
   return (
-    <span className={`relative inline-flex shrink-0 ${box}`}>
-      <span className="flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white">
-        {initials(name)}
-      </span>
+    <span className={`relative inline-flex shrink-0 overflow-hidden rounded-full ${box}`}>
+      {shown ? null : (
+        <span className="flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white">
+          {initials(name)}
+        </span>
+      )}
       {src && !failed ? (
         <img
           src={src}
           alt=""
-          className={`absolute inset-0 size-full rounded-full border border-line object-cover ${shown ? '' : 'invisible'}`}
+          className={`absolute inset-0 size-full object-cover ${shown ? '' : 'invisible'}`}
           onLoad={() => setShown(true)}
           onError={() => setFailed(true)}
         />

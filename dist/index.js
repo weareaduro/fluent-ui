@@ -1719,14 +1719,14 @@ var PersonAvatar = ({
       cancelled = true;
     };
   }, [email]);
-  return /* @__PURE__ */ jsxs16("span", { className: `relative inline-flex shrink-0 ${box}`, children: [
-    /* @__PURE__ */ jsx18("span", { className: "flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white", children: initials(name) }),
+  return /* @__PURE__ */ jsxs16("span", { className: `relative inline-flex shrink-0 overflow-hidden rounded-full ${box}`, children: [
+    shown ? null : /* @__PURE__ */ jsx18("span", { className: "flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white", children: initials(name) }),
     src ? /* @__PURE__ */ jsx18(
       "img",
       {
         src,
         alt: "",
-        className: `absolute inset-0 size-full rounded-full border border-orange-100/40 object-cover ${shown ? "" : "invisible"}`,
+        className: `absolute inset-0 size-full object-cover ${shown ? "" : "invisible"}`,
         onLoad: () => setShown(true),
         onError: () => setSrc(null)
       }
@@ -1735,7 +1735,7 @@ var PersonAvatar = ({
 };
 
 // src/components/OrganisationAvatar.tsx
-import { useState as useState4 } from "react";
+import { useEffect as useEffect2, useState as useState4 } from "react";
 
 // src/organisationFavicon.ts
 var organisationFaviconUrl = (website, size = 128) => {
@@ -1774,14 +1774,18 @@ var OrganisationAvatar = ({
   const [failed, setFailed] = useState4(false);
   const [shown, setShown] = useState4(false);
   const box = sizeClassName2[size];
-  return /* @__PURE__ */ jsxs17("span", { className: `relative inline-flex shrink-0 ${box}`, children: [
-    /* @__PURE__ */ jsx19("span", { className: "flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white", children: initials2(name) }),
+  useEffect2(() => {
+    setFailed(false);
+    setShown(false);
+  }, [src]);
+  return /* @__PURE__ */ jsxs17("span", { className: `relative inline-flex shrink-0 overflow-hidden rounded-full ${box}`, children: [
+    shown ? null : /* @__PURE__ */ jsx19("span", { className: "flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white", children: initials2(name) }),
     src && !failed ? /* @__PURE__ */ jsx19(
       "img",
       {
         src,
         alt: "",
-        className: `absolute inset-0 size-full rounded-full border border-line object-cover ${shown ? "" : "invisible"}`,
+        className: `absolute inset-0 size-full object-cover ${shown ? "" : "invisible"}`,
         onLoad: () => setShown(true),
         onError: () => setFailed(true)
       }

@@ -53,15 +53,17 @@ export const PersonAvatar = ({
   }, [email]);
 
   return (
-    <span className={`relative inline-flex shrink-0 ${box}`}>
-      <span className="flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white">
-        {initials(name)}
-      </span>
+    <span className={`relative inline-flex shrink-0 overflow-hidden rounded-full ${box}`}>
+      {shown ? null : (
+        <span className="flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white">
+          {initials(name)}
+        </span>
+      )}
       {src ? (
         <img
           src={src}
           alt=""
-          className={`absolute inset-0 size-full rounded-full border border-orange-100/40 object-cover ${shown ? '' : 'invisible'}`}
+          className={`absolute inset-0 size-full object-cover ${shown ? '' : 'invisible'}`}
           onLoad={() => setShown(true)}
           onError={() => setSrc(null)}
         />
