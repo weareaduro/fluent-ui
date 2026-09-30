@@ -4,6 +4,7 @@ import { useState, type ReactElement, type ReactNode } from 'react';
 import { AuthFrame, AuthTitle } from './AuthFrame';
 import { Button } from './Button';
 import { Input } from './Input';
+import { LegalNotice } from './LegalNotice';
 import { SignInMethods } from './SignInMethods';
 
 export const SignInScreen = ({
@@ -14,6 +15,7 @@ export const SignInScreen = ({
   onSelect,
   onSubmitEmail,
   productName,
+  showLegalNotice = true,
   submitting = false,
 }: {
   emphasizeProduct?: boolean | undefined;
@@ -23,9 +25,16 @@ export const SignInScreen = ({
   onSelect: (hint: string) => void;
   onSubmitEmail: (value: { email: string; password: string }) => Promise<void> | void;
   productName: string;
+  showLegalNotice?: boolean | undefined;
   submitting?: boolean | undefined;
 }): ReactElement => {
   const [emailStep, setEmailStep] = useState(false);
+  const frameFooter = (
+    <>
+      {footer}
+      {showLegalNotice ? <LegalNotice productName={productName} /> : null}
+    </>
+  );
   const form = useForm({
     defaultValues: { email: '', password: '' },
     onSubmit: async ({ value }) => {
@@ -37,7 +46,7 @@ export const SignInScreen = ({
     return (
       <AuthFrame
         emphasizeProduct={emphasizeProduct}
-        footer={footer}
+        footer={frameFooter}
         onBack={() => setEmailStep(false)}
         productName={productName}
       >
@@ -101,7 +110,7 @@ export const SignInScreen = ({
   }
 
   return (
-    <AuthFrame emphasizeProduct={emphasizeProduct} footer={footer} productName={productName}>
+    <AuthFrame emphasizeProduct={emphasizeProduct} footer={frameFooter} productName={productName}>
       <AuthTitle title="Welcome back!" subtitle="Select one of the options below" />
       <div className="flex w-full flex-col gap-3">
         <SignInMethods issuer={issuer} onSelect={onSelect} />

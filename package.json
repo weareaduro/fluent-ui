@@ -5,10 +5,24 @@
   "license": "ISC",
   "type": "module",
   "exports": {
-    ".": "./src/index.tsx",
+    ".": {
+      "types": "./src/index.tsx",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
     "./fonts.css": "./src/fonts.css"
   },
-  "files": ["src", "types"],
+  "files": [
+    "dist",
+    "src",
+    "types"
+  ],
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
   "peerDependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
