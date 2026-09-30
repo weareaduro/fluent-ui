@@ -51,6 +51,8 @@ export { readAuthMeta, type AuthMeta, type AuthMetaEnv } from './authMetaEnv';
 
 export { LegalNotice } from './components/LegalNotice';
 
+export { PersonAvatar } from './components/PersonAvatar';
+
 export { SignInScreen } from './components/SignInScreen';
 
 export { AppFrame, PageHeader, type AppNavItem } from './components/AppFrame';

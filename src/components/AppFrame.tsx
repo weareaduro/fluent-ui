@@ -6,6 +6,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link } from '@tanstack/react-router';
 import { useState, type ReactElement, type ReactNode } from 'react';
+import logo from '../logo.svg';
+import { PersonAvatar } from './PersonAvatar';
 import { ProductLockup } from './ProductLockup';
 
 const AduroMark = ({ className = 'h-5 w-auto' }: { className?: string }): ReactElement => (
@@ -71,21 +73,22 @@ const OrganisationAvatar = ({
 }): ReactElement => {
   const src = organisationFaviconUrl(website);
   const [failed, setFailed] = useState(false);
-
-  if (src && !failed) {
-    return (
-      <img
-        src={src}
-        alt=""
-        className="size-7 shrink-0 rounded-full border border-line object-cover"
-        onError={() => setFailed(true)}
-      />
-    );
-  }
+  const [shown, setShown] = useState(false);
 
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
-      {initials(label)}
+    <span className="relative inline-flex size-7 shrink-0">
+      <span className="flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 text-[11px] font-bold text-white">
+        {initials(label)}
+      </span>
+      {src && !failed ? (
+        <img
+          src={src}
+          alt=""
+          className={`absolute inset-0 size-full rounded-full border border-line object-cover ${shown ? '' : 'invisible'}`}
+          onLoad={() => setShown(true)}
+          onError={() => setFailed(true)}
+        />
+      ) : null}
     </span>
   );
 };
@@ -144,9 +147,7 @@ const AccountMenu = ({
       className="group flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2 py-2 text-left outline-none transition hover:bg-white/5 data-[collapsed=true]:justify-center"
       data-collapsed={collapsed}
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
-        {initials(name)}
-      </span>
+      <PersonAvatar email={email} name={name} />
       {collapsed ? null : (
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-white">{name}</span>
@@ -274,25 +275,12 @@ export const AppFrame = ({
             aria-label={`${productName} by Aduro`}
             className="inline-flex flex-col items-center gap-1.5"
           >
-            {logoSrc ? (
-              <img src={logoSrc} alt="" className="h-5 w-auto" />
+            {collapsed ? (
+              <AduroMark className="h-5 w-auto" />
             ) : (
-              <span className="inline-flex items-center gap-2">
-                <AduroMark />
-                {collapsed ? null : (
-                  <span className="font-grotesque text-[22px] font-semibold leading-none tracking-tight text-white">
-                    {productName}
-                  </span>
-                )}
-              </span>
+              <img src={logoSrc ?? logo} alt="" className="h-5 w-auto" />
             )}
-            {collapsed ? null : logoSrc ? (
-              <ProductLockup productName={productName} />
-            ) : (
-              <span className="font-grotesque text-sm font-semibold leading-6 text-grey-500">
-                by Aduro
-              </span>
-            )}
+            {collapsed ? null : <ProductLockup productName={productName} />}
           </Link>
         </div>
         {organisations && organisations.options.length > 0 && !collapsed ? (

@@ -1,9 +1,5 @@
+import { Link } from '@tanstack/react-router';
 import type { ReactElement, ReactNode } from 'react';
-
-const defaultLinks = {
-  privacyUrl: 'https://aduro.io/privacy',
-  termsUrl: 'https://aduro.io/terms',
-};
 
 const separator = (index: number, count: number): string => {
   if (index === 0) return '';
@@ -13,30 +9,19 @@ const separator = (index: number, count: number): string => {
   return ', ';
 };
 
-export const LegalNotice = ({
-  productName,
-  privacyUrl = defaultLinks.privacyUrl,
-  termsUrl = defaultLinks.termsUrl,
-}: {
-  productName: string;
-  privacyUrl?: string | undefined;
-  termsUrl?: string | undefined;
-}): ReactElement => {
-  const links = [
-    { href: privacyUrl, label: 'Privacy Policy' },
-    { href: termsUrl, label: 'Terms and Conditions' },
-  ];
+const links = [
+  { label: 'Privacy Policy', to: '/privacy' },
+  { label: 'Terms and Conditions', to: '/terms' },
+] as const;
+
+/** Sign-in acknowledgement. The pages live on this product at `/privacy` and `/terms`. */
+export const LegalNotice = ({ productName }: { productName: string }): ReactElement => {
   const names: ReactNode[] = links.map((link, index) => (
-    <span key={link.href}>
+    <span key={link.to}>
       {separator(index, links.length)}
-      <a
-        href={link.href}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="text-orange-100 underline hover:brightness-125"
-      >
+      <Link to={link.to} className="text-orange-100 underline hover:brightness-125">
         {link.label}
-      </a>
+      </Link>
     </span>
   ));
 
