@@ -37,10 +37,10 @@ interface SelectProps<T extends string> {
 
 /** Figma dropdown: 2px radius, `bg-input` surface, `low-priority` text. */
 export const dropdownTriggerStyles =
-  'w-full bg-input border rounded-xs focus-within:outline-none transition-colors';
+  'w-full bg-secondary border rounded-xs focus-within:outline-none transition-colors';
 
 export const dropdownPanelStyles =
-  'z-50 mt-1 w-[var(--button-width)] origin-top overflow-y-auto rounded-xs border border-transparent bg-input p-1 outline-none transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0';
+  'z-50 mt-1 w-[var(--button-width)] origin-top overflow-y-auto rounded-xs border border-transparent bg-secondary p-1 outline-none transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0';
 
 export const dropdownOptionStyles =
   'w-full cursor-pointer rounded-xs px-3 py-2.5 text-left text-sm text-white hover:bg-grey/20 data-[focus]:bg-grey/20';

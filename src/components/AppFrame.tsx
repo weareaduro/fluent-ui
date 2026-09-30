@@ -164,7 +164,7 @@ export const AppFrame = ({
   productName: string;
 }): ReactElement => (
   <div className="flex h-screen w-full overflow-hidden bg-primary text-white">
-    <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-line bg-primary">
+    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-line bg-primary">
       <div className="flex shrink-0 flex-col items-center justify-center px-4 pb-3 pt-4">
         <Link to="/" aria-label={`${productName} by Aduro`} className="inline-flex flex-col items-center gap-1.5">
           {logoSrc ? <img src={logoSrc} alt="" className="h-5 w-auto" /> : <AduroMark />}

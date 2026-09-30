@@ -67,7 +67,7 @@ export const NumberInput = ({
 export const styles = {
   /** Figma "Inputs/Input text": 2px radius, `bg-input` surface, 16px/24px Open Sans. */
   input:
-    'w-full bg-input border rounded-xs text-white text-base leading-6 font-open focus-within:outline-none transition-colors',
+    'w-full bg-secondary border rounded-xs text-white text-base leading-6 font-open focus-within:outline-none transition-colors',
   placeholder: 'placeholder:italic placeholder:text-grey-600',
   inputError: 'border-red-500',
   label: 'text-white text-sm font-semibold text-left',

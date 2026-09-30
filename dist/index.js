@@ -372,7 +372,7 @@ var useFieldVariant = (override) => {
 import { Fragment, jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
 var styles = {
   /** Figma "Inputs/Input text": 2px radius, `bg-input` surface, 16px/24px Open Sans. */
-  input: "w-full bg-input border rounded-xs text-white text-base leading-6 font-open focus-within:outline-none transition-colors",
+  input: "w-full bg-secondary border rounded-xs text-white text-base leading-6 font-open focus-within:outline-none transition-colors",
   placeholder: "placeholder:italic placeholder:text-grey-600",
   inputError: "border-red-500",
   label: "text-white text-sm font-semibold text-left"
@@ -536,8 +536,8 @@ import {
 } from "@heroicons/react/24/outline";
 import classNames3 from "classnames";
 import { jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
-var dropdownTriggerStyles = "w-full bg-input border rounded-xs focus-within:outline-none transition-colors";
-var dropdownPanelStyles = "z-50 mt-1 w-[var(--button-width)] origin-top overflow-y-auto rounded-xs border border-transparent bg-input p-1 outline-none transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0";
+var dropdownTriggerStyles = "w-full bg-secondary border rounded-xs focus-within:outline-none transition-colors";
+var dropdownPanelStyles = "z-50 mt-1 w-[var(--button-width)] origin-top overflow-y-auto rounded-xs border border-transparent bg-secondary p-1 outline-none transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0";
 var dropdownOptionStyles = "w-full cursor-pointer rounded-xs px-3 py-2.5 text-left text-sm text-white hover:bg-grey/20 data-[focus]:bg-grey/20";
 function Select({
   options,
@@ -921,7 +921,7 @@ function ComboBox({
         "div",
         {
           className: classNames5(
-            "group relative flex flex-col overflow-hidden rounded-xs border bg-input transition-all duration-100 -outline-offset-1 focus-within:outline-2 focus-within:outline-white",
+            "group relative flex flex-col overflow-hidden rounded-xs border bg-secondary transition-all duration-100 -outline-offset-1 focus-within:outline-2 focus-within:outline-white",
             {
               "border-transparent": !outlined && !error?.length,
               "border-grey-700t": outlined && !error?.length,
@@ -976,7 +976,7 @@ function ComboBox({
         {
           transition: true,
           anchor: "bottom start",
-          className: "bg-input mt-1 space-y-1 p-1 w-(--input-width) border border-transparent rounded-xs origin-top transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0 z-50 max-h-60 overflow-y-auto",
+          className: "bg-secondary mt-1 space-y-1 p-1 w-(--input-width) border border-transparent rounded-xs origin-top transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0 z-50 max-h-60 overflow-y-auto",
           hidden: options.length === 0,
           children: hasGroups ? Object.entries(grouped).map(([group, items]) => /* @__PURE__ */ jsxs7("div", { children: [
             group && /* @__PURE__ */ jsx8("div", { className: "px-3 py-1.5 text-xs font-semibold text-low uppercase tracking-wider", children: group }),
@@ -1168,7 +1168,7 @@ import { XMarkIcon as XMarkIcon2 } from "@heroicons/react/24/outline";
 import classNames7 from "classnames";
 import { Fragment as Fragment2, jsx as jsx10, jsxs as jsxs9 } from "react/jsx-runtime";
 var overlayClass = "fixed inset-0 z-40 data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:ease-in data-[enter]:duration-200 data-[leave]:duration-150";
-var panelBaseClass = "bg-secondary border border-grey-700t rounded-[2px] shadow-xl flex flex-col max-h-[90vh] overflow-hidden";
+var panelBaseClass = "bg-tertiary border border-grey-700t rounded-[2px] shadow-xl flex flex-col max-h-[90vh] overflow-hidden";
 function Modal({
   open,
   onClose,
@@ -1905,7 +1905,7 @@ var AppFrame = ({
   organisations,
   productName
 }) => /* @__PURE__ */ jsxs16("div", { className: "flex h-screen w-full overflow-hidden bg-primary text-white", children: [
-  /* @__PURE__ */ jsxs16("aside", { className: "flex h-full w-[220px] shrink-0 flex-col border-r border-line bg-primary", children: [
+  /* @__PURE__ */ jsxs16("aside", { className: "flex h-full w-60 shrink-0 flex-col border-r border-line bg-primary", children: [
     /* @__PURE__ */ jsx19("div", { className: "flex shrink-0 flex-col items-center justify-center px-4 pb-3 pt-4", children: /* @__PURE__ */ jsxs16(Link2, { to: "/", "aria-label": `${productName} by Aduro`, className: "inline-flex flex-col items-center gap-1.5", children: [
       logoSrc ? /* @__PURE__ */ jsx19("img", { src: logoSrc, alt: "", className: "h-5 w-auto" }) : /* @__PURE__ */ jsx19(AduroMark, {}),
       /* @__PURE__ */ jsx19(ProductLockup, { productName })

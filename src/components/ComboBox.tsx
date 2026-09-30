@@ -82,7 +82,7 @@ export function ComboBox<T extends string>({
       <HComboBox>
         <div
           className={classNames(
-            'group relative flex flex-col overflow-hidden rounded-xs border bg-input transition-all duration-100 -outline-offset-1 focus-within:outline-2 focus-within:outline-white',
+            'group relative flex flex-col overflow-hidden rounded-xs border bg-secondary transition-all duration-100 -outline-offset-1 focus-within:outline-2 focus-within:outline-white',
             {
               'border-transparent': !outlined && !error?.length,
               'border-grey-700t': outlined && !error?.length,
@@ -140,7 +140,7 @@ export function ComboBox<T extends string>({
         <ComboboxOptions
           transition
           anchor="bottom start"
-          className="bg-input mt-1 space-y-1 p-1 w-(--input-width) border border-transparent rounded-xs origin-top transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0 z-50 max-h-60 overflow-y-auto"
+          className="bg-secondary mt-1 space-y-1 p-1 w-(--input-width) border border-transparent rounded-xs origin-top transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0 z-50 max-h-60 overflow-y-auto"
           hidden={options.length === 0}
         >
           {hasGroups

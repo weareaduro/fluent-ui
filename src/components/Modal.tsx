@@ -23,7 +23,7 @@ const overlayClass =
   'fixed inset-0 z-40 data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:ease-in data-[enter]:duration-200 data-[leave]:duration-150';
 
 const panelBaseClass =
-  'bg-secondary border border-grey-700t rounded-[2px] shadow-xl flex flex-col max-h-[90vh] overflow-hidden';
+  'bg-tertiary border border-grey-700t rounded-[2px] shadow-xl flex flex-col max-h-[90vh] overflow-hidden';
 
 export function Modal({
   open,
