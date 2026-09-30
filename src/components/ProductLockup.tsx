@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 
 /** Product wordmark. The product name uses the primary colour. "by Aduro" stays grey. */
 export const ProductLockup = ({
-  className = 'text-[10px] font-bold uppercase tracking-[0.12em] text-subtle/50',
+  className = 'font-grotesque text-sm font-semibold leading-6 text-grey-500',
   emphasizeProduct = true,
   productName,
 }: {

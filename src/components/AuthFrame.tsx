@@ -36,7 +36,7 @@ export const AuthFrame = ({
         <span className="inline-flex flex-col items-center">
           <img src={logoSrc ?? logo} alt="" className="h-8 w-auto" />
           <ProductLockup
-            className="mt-3 text-[10px] font-bold uppercase tracking-[0.12em] text-subtle/50"
+            className="mt-3 font-grotesque text-sm font-semibold leading-6 text-grey-500"
             emphasizeProduct={emphasizeProduct}
             productName={productName}
           />

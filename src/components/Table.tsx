@@ -145,7 +145,7 @@ export const TableContainer = ({
 }): ReactElement => (
   <div
     className={classNames(
-      'overflow-hidden flex flex-col min-h-0',
+      'flex w-full min-h-0 flex-col overflow-hidden',
       flush ? null : 'border border-grey-700t rounded-[2px]',
       className,
     )}
@@ -195,7 +195,7 @@ export const TablePagination = ({
   const to = total === 0 ? 0 : Math.min(page * perPage, total);
 
   return (
-    <nav aria-label="Table pagination" className="flex shrink-0 items-center justify-between gap-3 border-t border-grey-700t px-4 py-3 text-sm text-low">
+    <nav aria-label="Table pagination" className="flex shrink-0 items-center justify-between gap-3 border-t border-grey-700t px-4 py-3 text-sm text-grey-500">
       <div className="flex items-center gap-2">
         <span aria-live="polite" aria-atomic="true" className="sr-only">
           Showing {from}-{to} of {total}
@@ -222,7 +222,7 @@ export const TablePagination = ({
           size="small"
           tooltip="Previous page"
         />
-        <span aria-current="page" className="text-white">
+        <span aria-current="page">
           {page}
         </span>
         <span>Of {lastPage}</span>

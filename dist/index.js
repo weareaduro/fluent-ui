@@ -758,7 +758,7 @@ var TableContainer = ({
   "div",
   {
     className: classNames4(
-      "overflow-hidden flex flex-col min-h-0",
+      "flex w-full min-h-0 flex-col overflow-hidden",
       flush ? null : "border border-grey-700t rounded-[2px]",
       className
     ),
@@ -792,7 +792,7 @@ var TablePagination = ({
   const lastPage = Math.max(1, Math.ceil(total / perPage));
   const from = total === 0 ? 0 : (page - 1) * perPage + 1;
   const to = total === 0 ? 0 : Math.min(page * perPage, total);
-  return /* @__PURE__ */ jsxs6("nav", { "aria-label": "Table pagination", className: "flex shrink-0 items-center justify-between gap-3 border-t border-grey-700t px-4 py-3 text-sm text-low", children: [
+  return /* @__PURE__ */ jsxs6("nav", { "aria-label": "Table pagination", className: "flex shrink-0 items-center justify-between gap-3 border-t border-grey-700t px-4 py-3 text-sm text-grey-500", children: [
     /* @__PURE__ */ jsxs6("div", { className: "flex items-center gap-2", children: [
       /* @__PURE__ */ jsxs6("span", { "aria-live": "polite", "aria-atomic": "true", className: "sr-only", children: [
         "Showing ",
@@ -830,7 +830,7 @@ var TablePagination = ({
           tooltip: "Previous page"
         }
       ),
-      /* @__PURE__ */ jsx6("span", { "aria-current": "page", className: "text-white", children: page }),
+      /* @__PURE__ */ jsx6("span", { "aria-current": "page", children: page }),
       /* @__PURE__ */ jsxs6("span", { children: [
         "Of ",
         lastPage
@@ -1453,7 +1453,7 @@ function ConfirmDialog({
 // src/components/ProductLockup.tsx
 import { jsx as jsx13, jsxs as jsxs11 } from "react/jsx-runtime";
 var ProductLockup = ({
-  className = "text-[10px] font-bold uppercase tracking-[0.12em] text-subtle/50",
+  className = "font-grotesque text-sm font-semibold leading-6 text-grey-500",
   emphasizeProduct = true,
   productName
 }) => /* @__PURE__ */ jsxs11("span", { className, children: [
@@ -1493,7 +1493,7 @@ var AuthFrame = ({
       /* @__PURE__ */ jsx14(
         ProductLockup,
         {
-          className: "mt-3 text-[10px] font-bold uppercase tracking-[0.12em] text-subtle/50",
+          className: "mt-3 font-grotesque text-sm font-semibold leading-6 text-grey-500",
           emphasizeProduct,
           productName
         }
@@ -1897,7 +1897,7 @@ var OrganisationAvatar = ({
   }
   return /* @__PURE__ */ jsx19("span", { className: "flex size-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white", children: initials(label) });
 };
-var linkClassName = "group flex items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-sm font-semibold text-subtle outline-none transition hover:bg-white/5 hover:text-white data-[status=active]:bg-orange-100/10 data-[status=active]:text-orange-100";
+var linkClassName = "group flex items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-[15px] font-semibold leading-5 text-low-priority outline-none transition hover:bg-white/5 hover:text-white active:shadow-focused-dark data-[status=active]:bg-orange-100/10 data-[status=active]:text-orange-100";
 var menuItemClassName = "flex w-full items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white cursor-pointer";
 var initials = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "A";
 var NavLink = ({
@@ -2043,7 +2043,7 @@ var AppFrame = ({
                       /* @__PURE__ */ jsx19(AduroMark, {}),
                       collapsed ? null : /* @__PURE__ */ jsx19("span", { className: "font-grotesque text-[22px] font-semibold leading-none tracking-tight text-white", children: productName })
                     ] }),
-                    collapsed ? null : logoSrc ? /* @__PURE__ */ jsx19(ProductLockup, { productName }) : /* @__PURE__ */ jsx19("span", { className: "text-[10px] font-bold uppercase tracking-[0.12em] text-subtle/50", children: "by Aduro" })
+                    collapsed ? null : logoSrc ? /* @__PURE__ */ jsx19(ProductLockup, { productName }) : /* @__PURE__ */ jsx19("span", { className: "font-grotesque text-sm font-semibold leading-6 text-grey-500", children: "by Aduro" })
                   ]
                 }
               )
@@ -2064,7 +2064,10 @@ var AppFrame = ({
               className: "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3",
               children: [
                 items.map((item) => /* @__PURE__ */ jsx19(NavLink, { collapsed, item }, item.to)),
-                footerItems.length > 0 ? /* @__PURE__ */ jsx19("div", { className: "mt-auto flex flex-col gap-1 border-t border-line pt-3", children: footerItems.map((item) => /* @__PURE__ */ jsx19(NavLink, { collapsed, item }, item.to)) }) : null
+                footerItems.length > 0 ? /* @__PURE__ */ jsxs17("div", { className: "mt-auto flex flex-col gap-1", children: [
+                  collapsed ? null : /* @__PURE__ */ jsx19("span", { className: "px-2.5 pb-1 pt-2 font-grotesque text-sm font-semibold leading-6 text-grey-500", children: "Administration" }),
+                  footerItems.map((item) => /* @__PURE__ */ jsx19(NavLink, { collapsed, item }, item.to))
+                ] }) : null
               ]
             }
           ),
@@ -2119,7 +2122,7 @@ import { jsx as jsx20, jsxs as jsxs18 } from "react/jsx-runtime";
 function DataTable({
   columns,
   empty = "Nothing here yet.",
-  pageSize = 20,
+  pageSize = 25,
   rows,
   rowKey
 }) {

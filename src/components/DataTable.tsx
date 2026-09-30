@@ -10,7 +10,7 @@ export type DataColumn<Row> = {
 export function DataTable<Row>({
   columns,
   empty = 'Nothing here yet.',
-  pageSize = 20,
+  pageSize = 25,
   rows,
   rowKey,
 }: {

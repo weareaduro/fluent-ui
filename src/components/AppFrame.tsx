@@ -91,7 +91,7 @@ const OrganisationAvatar = ({
 };
 
 const linkClassName =
-  'group flex items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-sm font-semibold text-subtle outline-none transition hover:bg-white/5 hover:text-white data-[status=active]:bg-orange-100/10 data-[status=active]:text-orange-100';
+  'group flex items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-[15px] font-semibold leading-5 text-low-priority outline-none transition hover:bg-white/5 hover:text-white active:shadow-focused-dark data-[status=active]:bg-orange-100/10 data-[status=active]:text-orange-100';
 
 const menuItemClassName =
   'flex w-full items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white cursor-pointer';
@@ -289,7 +289,7 @@ export const AppFrame = ({
             {collapsed ? null : logoSrc ? (
               <ProductLockup productName={productName} />
             ) : (
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-subtle/50">
+              <span className="font-grotesque text-sm font-semibold leading-6 text-grey-500">
                 by Aduro
               </span>
             )}
@@ -312,7 +312,12 @@ export const AppFrame = ({
             <NavLink key={item.to} collapsed={collapsed} item={item} />
           ))}
           {footerItems.length > 0 ? (
-            <div className="mt-auto flex flex-col gap-1 border-t border-line pt-3">
+            <div className="mt-auto flex flex-col gap-1">
+              {collapsed ? null : (
+                <span className="px-2.5 pb-1 pt-2 font-grotesque text-sm font-semibold leading-6 text-grey-500">
+                  Administration
+                </span>
+              )}
               {footerItems.map((item) => (
                 <NavLink key={item.to} collapsed={collapsed} item={item} />
               ))}
