@@ -1795,27 +1795,144 @@ var SignInScreen = ({
 };
 
 // src/components/AppFrame.tsx
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import {
+  ArrowLeftStartOnRectangleIcon,
+  ChevronDownIcon as ChevronDownIcon5,
+  Cog6ToothIcon
+} from "@heroicons/react/24/outline";
 import { Link as Link2 } from "@tanstack/react-router";
 import { jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
-var navClassName = "rounded-[2px] px-2.5 py-2 text-sm font-semibold text-subtle outline-none transition hover:bg-white/5 hover:text-white data-[status=active]:bg-white/10 data-[status=active]:text-white";
+var AduroMark = () => /* @__PURE__ */ jsxs16("svg", { width: "33", height: "29", viewBox: "0 0 33 29", fill: "none", "aria-hidden": "true", className: "h-5 w-auto", children: [
+  /* @__PURE__ */ jsx19("path", { d: "M8.40666 22.4259L15.6041 9.9563C15.6488 9.87583 15.6756 9.78642 15.6756 9.69403V1.27764C15.6756 0.74118 14.9633 0.55044 14.6951 1.01537L0.0737181 26.3391C-0.19749 26.807 0.333005 27.3315 0.797933 27.0513L8.22188 22.6107C8.29937 22.566 8.36196 22.5004 8.40666 22.4229V22.4259Z", fill: "white" }),
+  /* @__PURE__ */ jsx19("path", { d: "M16.8225 9.96206L24.0647 22.5062C24.1094 22.5837 24.1749 22.6492 24.2524 22.6969L31.6346 27.0601C32.0996 27.3343 32.6271 26.8127 32.3559 26.3448L17.7315 1.01219C17.4633 0.547267 16.751 0.738006 16.751 1.27446V9.69682C16.751 9.7892 16.7748 9.87861 16.8225 9.95908V9.96206Z", fill: "white" }),
+  /* @__PURE__ */ jsx19("path", { d: "M23.3771 23.5137H8.95834C8.86297 23.5137 8.77058 23.5405 8.69011 23.5882L1.68937 27.7755C1.2304 28.0497 1.4271 28.7531 1.96057 28.7531H30.4613C30.9947 28.7531 31.1885 28.0467 30.7295 27.7755L23.6483 23.5882C23.5678 23.5405 23.4754 23.5137 23.3801 23.5137H23.3771Z", fill: "white" })
+] });
+var linkClassName = "group flex items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-sm font-semibold text-subtle outline-none transition hover:bg-white/5 hover:text-white data-[status=active]:bg-orange-100/10 data-[status=active]:text-orange-100";
+var menuItemClassName = "flex w-full items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white cursor-pointer";
+var initials = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "A";
+var AccountMenu = ({
+  email,
+  name,
+  onLogout,
+  settingsTo
+}) => /* @__PURE__ */ jsxs16(Menu, { children: [
+  /* @__PURE__ */ jsxs16(
+    MenuButton,
+    {
+      "aria-label": "Account menu",
+      className: "group flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2 py-2 text-left outline-none transition hover:bg-white/5",
+      children: [
+        /* @__PURE__ */ jsx19("span", { className: "flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white", children: initials(name) }),
+        /* @__PURE__ */ jsxs16("span", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsx19("span", { className: "block truncate text-sm font-semibold text-white", children: name }),
+          email ? /* @__PURE__ */ jsx19("span", { className: "block truncate text-xs text-subtle/70", children: email }) : null
+        ] }),
+        /* @__PURE__ */ jsx19(ChevronDownIcon5, { className: "size-4 shrink-0 text-subtle/70 group-hover:text-white" })
+      ]
+    }
+  ),
+  /* @__PURE__ */ jsxs16(
+    MenuItems,
+    {
+      portal: true,
+      anchor: { to: "top start", gap: 6 },
+      className: "z-50 flex min-w-60 flex-col rounded-[2px] border border-line bg-secondary text-white shadow-xl outline-none",
+      children: [
+        /* @__PURE__ */ jsxs16("div", { className: "flex flex-col border-b border-line px-3 py-3", children: [
+          /* @__PURE__ */ jsx19("span", { className: "truncate text-sm font-semibold text-white", children: name }),
+          email ? /* @__PURE__ */ jsx19("span", { className: "truncate text-xs text-subtle", children: email }) : null
+        ] }),
+        /* @__PURE__ */ jsxs16("div", { className: "p-1.5", children: [
+          /* @__PURE__ */ jsx19(MenuItem, { children: /* @__PURE__ */ jsxs16(Link2, { to: settingsTo, className: menuItemClassName, children: [
+            /* @__PURE__ */ jsx19(Cog6ToothIcon, { className: "size-4 shrink-0 text-subtle" }),
+            /* @__PURE__ */ jsx19("span", { children: "Settings" })
+          ] }) }),
+          /* @__PURE__ */ jsx19(MenuItem, { children: /* @__PURE__ */ jsxs16("button", { type: "button", onClick: onLogout, className: menuItemClassName, children: [
+            /* @__PURE__ */ jsx19(ArrowLeftStartOnRectangleIcon, { className: "size-4 shrink-0 text-subtle" }),
+            /* @__PURE__ */ jsx19("span", { children: "Logout" })
+          ] }) })
+        ] })
+      ]
+    }
+  )
+] });
+var OrganisationMenu = ({
+  onChange,
+  options,
+  value
+}) => {
+  const current = options.find((option) => option.value === value) ?? options[0];
+  const label = current?.label ?? "Organisation";
+  return /* @__PURE__ */ jsxs16(Menu, { children: [
+    /* @__PURE__ */ jsxs16(
+      MenuButton,
+      {
+        "aria-label": "Switch organisation",
+        className: "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10",
+        children: [
+          /* @__PURE__ */ jsx19("span", { className: "flex size-7 shrink-0 items-center justify-center rounded-[2px] bg-white/10 text-xs font-bold text-white", children: initials(label) }),
+          /* @__PURE__ */ jsx19("span", { className: "min-w-0 flex-1 truncate text-sm font-semibold text-white", children: label }),
+          /* @__PURE__ */ jsx19(ChevronDownIcon5, { className: "size-4 shrink-0 text-subtle" })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsx19(
+      MenuItems,
+      {
+        portal: true,
+        anchor: { to: "bottom start", gap: 6 },
+        className: "z-50 flex min-w-56 flex-col rounded-[2px] border border-line bg-secondary p-1.5 text-white shadow-xl outline-none",
+        children: options.map((option) => /* @__PURE__ */ jsx19(MenuItem, { children: /* @__PURE__ */ jsx19(
+          "button",
+          {
+            type: "button",
+            onClick: () => onChange(option.value),
+            className: menuItemClassName,
+            children: option.label
+          }
+        ) }, option.value))
+      }
+    )
+  ] });
+};
 var AppFrame = ({
+  account,
   children,
-  footer,
   footerItems = [],
   items,
-  brand,
-  topbar
+  logoSrc,
+  organisations,
+  productName
 }) => /* @__PURE__ */ jsxs16("div", { className: "flex h-screen w-full overflow-hidden bg-primary text-white", children: [
-  /* @__PURE__ */ jsxs16("aside", { className: "flex w-60 shrink-0 flex-col border-r border-grey-700t bg-secondary", children: [
-    /* @__PURE__ */ jsx19("div", { className: "px-4 py-5", children: brand }),
-    /* @__PURE__ */ jsx19("nav", { className: "flex flex-1 flex-col gap-1 px-3", children: items.map((item) => /* @__PURE__ */ jsx19(Link2, { to: item.to, className: navClassName, children: item.label }, item.to)) }),
-    footerItems.length > 0 ? /* @__PURE__ */ jsx19("nav", { className: "flex flex-col gap-1 px-3 pb-2", children: footerItems.map((item) => /* @__PURE__ */ jsx19(Link2, { to: item.to, className: navClassName, children: item.label }, item.to)) }) : null,
-    footer ? /* @__PURE__ */ jsx19("div", { className: "p-3", children: footer }) : null
+  /* @__PURE__ */ jsxs16("aside", { className: "flex h-full w-[220px] shrink-0 flex-col border-r border-line bg-primary", children: [
+    /* @__PURE__ */ jsx19("div", { className: "flex shrink-0 flex-col items-center justify-center px-4 pb-3 pt-4", children: /* @__PURE__ */ jsxs16(Link2, { to: "/", "aria-label": `${productName} by Aduro`, className: "inline-flex flex-col items-center gap-1.5", children: [
+      logoSrc ? /* @__PURE__ */ jsx19("img", { src: logoSrc, alt: "", className: "h-5 w-auto" }) : /* @__PURE__ */ jsx19(AduroMark, {}),
+      /* @__PURE__ */ jsx19(ProductLockup, { productName })
+    ] }) }),
+    organisations && organisations.options.length > 0 ? /* @__PURE__ */ jsx19("div", { className: "px-3 pb-3", children: /* @__PURE__ */ jsx19(
+      OrganisationMenu,
+      {
+        onChange: organisations.onChange,
+        options: organisations.options,
+        value: organisations.value
+      }
+    ) }) : null,
+    /* @__PURE__ */ jsxs16("nav", { "aria-label": "Main navigation", className: "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3", children: [
+      items.map((item) => /* @__PURE__ */ jsx19(Link2, { to: item.to, className: linkClassName, children: item.label }, item.to)),
+      footerItems.length > 0 ? /* @__PURE__ */ jsx19("div", { className: "mt-auto flex flex-col gap-1 border-t border-line pt-3", children: footerItems.map((item) => /* @__PURE__ */ jsx19(Link2, { to: item.to, className: linkClassName, children: item.label }, item.to)) }) : null
+    ] }),
+    account ? /* @__PURE__ */ jsx19("div", { className: "border-t border-line px-3 py-2", children: /* @__PURE__ */ jsx19(
+      AccountMenu,
+      {
+        email: account.email,
+        name: account.name,
+        onLogout: account.onLogout,
+        settingsTo: account.settingsTo ?? "/settings"
+      }
+    ) }) : null
   ] }),
-  /* @__PURE__ */ jsxs16("div", { className: "flex min-h-0 min-w-0 flex-1 flex-col", children: [
-    topbar,
-    /* @__PURE__ */ jsx19("main", { className: "min-h-0 flex-1 overflow-y-auto", children })
-  ] })
+  /* @__PURE__ */ jsx19("main", { className: "min-h-0 min-w-0 flex-1 overflow-y-auto", children })
 ] });
 var PageHeader = ({
   actions,
@@ -1835,49 +1952,46 @@ function DataTable({
   rows,
   rowKey
 }) {
-  const [page, setPage] = useState4(0);
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const current = Math.min(page, pageCount - 1);
-  const visible = rows.slice(current * pageSize, current * pageSize + pageSize);
-  return /* @__PURE__ */ jsxs17("div", { className: "flex flex-col gap-3", children: [
-    /* @__PURE__ */ jsx20("div", { className: "overflow-hidden rounded-[2px] border border-grey-700t", children: /* @__PURE__ */ jsxs17("table", { className: "w-full border-collapse text-left text-sm", children: [
-      /* @__PURE__ */ jsx20("thead", { className: "bg-white/5 text-grey-500", children: /* @__PURE__ */ jsx20("tr", { children: columns.map((column) => /* @__PURE__ */ jsx20("th", { className: "px-4 py-2 font-semibold", children: column.header }, column.key)) }) }),
-      /* @__PURE__ */ jsx20("tbody", { children: visible.length === 0 ? /* @__PURE__ */ jsx20("tr", { children: /* @__PURE__ */ jsx20("td", { className: "px-4 py-6 text-subtle", colSpan: columns.length, children: empty }) }) : visible.map((row) => /* @__PURE__ */ jsx20("tr", { className: "border-t border-grey-700t", children: columns.map((column) => /* @__PURE__ */ jsx20("td", { className: "px-4 py-3 text-white", children: column.cell(row) }, column.key)) }, rowKey(row))) })
-    ] }) }),
-    /* @__PURE__ */ jsxs17("div", { className: "flex items-center justify-between px-1 text-sm text-subtle", children: [
-      /* @__PURE__ */ jsxs17("span", { children: [
-        "Page ",
-        current + 1,
-        " of ",
-        pageCount
-      ] }),
-      /* @__PURE__ */ jsxs17("div", { className: "flex gap-2", children: [
-        /* @__PURE__ */ jsx20(
-          Button,
-          {
-            button: {
-              disabled: current === 0,
-              onClick: () => setPage(current - 1),
-              size: "small",
-              text: "Previous",
-              type: "secondary"
-            }
-          }
-        ),
-        /* @__PURE__ */ jsx20(
-          Button,
-          {
-            button: {
-              disabled: current >= pageCount - 1,
-              onClick: () => setPage(current + 1),
-              size: "small",
-              text: "Next",
-              type: "secondary"
-            }
-          }
-        )
-      ] })
-    ] })
+  const [page, setPage] = useState4(1);
+  const [perPage, setPerPage] = useState4(pageSize);
+  const lastPage = Math.max(1, Math.ceil(rows.length / perPage));
+  const current = Math.min(page, lastPage);
+  const visible = rows.slice((current - 1) * perPage, current * perPage);
+  const width = columns.length === 0 ? 100 : Math.floor(100 / columns.length);
+  return /* @__PURE__ */ jsxs17(TableContainer, { flush: true, className: "min-h-[320px]", children: [
+    /* @__PURE__ */ jsx20(
+      TableColumns,
+      {
+        widthType: "pc",
+        columns: columns.map((column) => ({ heading: column.header, width }))
+      }
+    ),
+    visible.length === 0 ? /* @__PURE__ */ jsx20("p", { className: "px-5 py-6 text-sm text-subtle", children: empty }) : /* @__PURE__ */ jsx20(
+      TableRows,
+      {
+        widthType: "pc",
+        rows: visible.map((row) => ({
+          uuid: rowKey(row),
+          cells: columns.map((column) => ({
+            content: column.cell(row),
+            width
+          }))
+        }))
+      }
+    ),
+    /* @__PURE__ */ jsx20(
+      TablePagination,
+      {
+        page: current,
+        perPage,
+        total: rows.length,
+        onPageChange: setPage,
+        onPerPageChange: (next) => {
+          setPerPage(next);
+          setPage(1);
+        }
+      }
+    )
   ] });
 }
 
