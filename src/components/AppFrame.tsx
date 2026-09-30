@@ -5,7 +5,7 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from '@tanstack/react-router';
-import type { ReactElement, ReactNode } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 import { ProductLockup } from './ProductLockup';
 
 const AduroMark = (): ReactElement => (
@@ -17,9 +17,28 @@ const AduroMark = (): ReactElement => (
 );
 
 export type AppNavItem = {
+  Icon?: HeroIconType | undefined;
   label: string;
   to: string;
 };
+
+const SidebarPanelIcon = ({ className = '' }: { className?: string }): ReactElement => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    aria-hidden="true"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M3.75 5.25h16.5a1.5 1.5 0 0 1 1.5 1.5v10.5a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5V6.75a1.5 1.5 0 0 1 1.5-1.5Zm5.25 0v13.5"
+    />
+  </svg>
+);
 
 export type AppOrganisation = {
   label: string;
@@ -40,30 +59,59 @@ const initials = (name: string): string =>
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('') || 'A';
 
+const NavLink = ({
+  collapsed,
+  item,
+}: {
+  collapsed: boolean;
+  item: AppNavItem;
+}): ReactElement => (
+  <Link
+    to={item.to}
+    aria-label={collapsed ? item.label : undefined}
+    title={collapsed ? item.label : undefined}
+    className={`${linkClassName} data-[collapsed=true]:justify-center`}
+    data-collapsed={collapsed}
+  >
+    {item.Icon ? <item.Icon className="size-5 shrink-0" /> : null}
+    {collapsed ? null : <span className="truncate">{item.label}</span>}
+  </Link>
+);
+
 const AccountMenu = ({
+  collapsed,
   email,
   name,
   onLogout,
+  role,
   settingsTo,
 }: {
+  collapsed: boolean;
   email?: string | undefined;
   name: string;
   onLogout: () => void;
+  role?: string | undefined;
   settingsTo: string;
 }): ReactElement => (
   <Menu>
     <MenuButton
       aria-label="Account menu"
-      className="group flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2 py-2 text-left outline-none transition hover:bg-white/5"
+      className="group flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2 py-2 text-left outline-none transition hover:bg-white/5 data-[collapsed=true]:justify-center"
+      data-collapsed={collapsed}
     >
       <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
         {initials(name)}
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-white">{name}</span>
-        {email ? <span className="block truncate text-xs text-subtle/70">{email}</span> : null}
-      </span>
-      <ChevronDownIcon className="size-4 shrink-0 text-subtle/70 group-hover:text-white" />
+      {collapsed ? null : (
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-white">{name}</span>
+          {role ? <span className="block truncate text-xs text-subtle/70">{role}</span> : null}
+          {!role && email ? <span className="block truncate text-xs text-subtle/70">{email}</span> : null}
+        </span>
+      )}
+      {collapsed ? null : (
+        <ChevronDownIcon className="size-4 shrink-0 text-subtle/70 group-hover:text-white" />
+      )}
     </MenuButton>
     <MenuItems
       portal
@@ -72,6 +120,7 @@ const AccountMenu = ({
     >
       <div className="flex flex-col border-b border-line px-3 py-3">
         <span className="truncate text-sm font-semibold text-white">{name}</span>
+        {role ? <span className="truncate text-xs text-subtle">{role}</span> : null}
         {email ? <span className="truncate text-xs text-subtle">{email}</span> : null}
       </div>
       <div className="p-1.5">
@@ -150,6 +199,7 @@ export const AppFrame = ({
     email?: string | undefined;
     name: string;
     onLogout: () => void;
+    role?: string | undefined;
     settingsTo?: string | undefined;
   };
   children: ReactNode;
@@ -162,54 +212,85 @@ export const AppFrame = ({
     value: string;
   };
   productName: string;
-}): ReactElement => (
-  <div className="flex h-screen w-full overflow-hidden bg-primary text-white">
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-line bg-primary">
-      <div className="flex shrink-0 flex-col items-center justify-center px-4 pb-3 pt-4">
-        <Link to="/" aria-label={`${productName} by Aduro`} className="inline-flex flex-col items-center gap-1.5">
-          {logoSrc ? <img src={logoSrc} alt="" className="h-5 w-auto" /> : <AduroMark />}
-          <ProductLockup productName={productName} />
-        </Link>
-      </div>
-      {organisations && organisations.options.length > 0 ? (
-        <div className="px-3 pb-3">
-          <OrganisationMenu
-            onChange={organisations.onChange}
-            options={organisations.options}
-            value={organisations.value}
-          />
-        </div>
-      ) : null}
-      <nav aria-label="Main navigation" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3">
-        {items.map((item) => (
-          <Link key={item.to} to={item.to} className={linkClassName}>
-            {item.label}
+}): ReactElement => {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-primary text-white">
+      <aside
+        data-collapsed={collapsed}
+        className="flex h-full shrink-0 flex-col border-r border-line bg-primary transition-all duration-150 data-[collapsed=false]:w-60 data-[collapsed=true]:w-[65px]"
+      >
+        <div
+          className="flex shrink-0 flex-col items-center justify-center px-4 data-[collapsed=false]:pb-3 data-[collapsed=false]:pt-4 data-[collapsed=true]:h-14"
+          data-collapsed={collapsed}
+        >
+          <Link
+            to="/"
+            aria-label={`${productName} by Aduro`}
+            className="inline-flex flex-col items-center gap-1.5"
+          >
+            {logoSrc ? <img src={logoSrc} alt="" className="h-5 w-auto" /> : <AduroMark />}
+            {collapsed ? null : <ProductLockup productName={productName} />}
           </Link>
-        ))}
-        {footerItems.length > 0 ? (
-          <div className="mt-auto flex flex-col gap-1 border-t border-line pt-3">
-            {footerItems.map((item) => (
-              <Link key={item.to} to={item.to} className={linkClassName}>
-                {item.label}
-              </Link>
-            ))}
+        </div>
+        {organisations && organisations.options.length > 0 && !collapsed ? (
+          <div className="px-3 pb-3">
+            <OrganisationMenu
+              onChange={organisations.onChange}
+              options={organisations.options}
+              value={organisations.value}
+            />
           </div>
         ) : null}
-      </nav>
-      {account ? (
-        <div className="border-t border-line px-3 py-2">
-          <AccountMenu
-            email={account.email}
-            name={account.name}
-            onLogout={account.onLogout}
-            settingsTo={account.settingsTo ?? '/settings'}
-          />
+        <nav
+          aria-label="Main navigation"
+          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3"
+        >
+          {items.map((item) => (
+            <NavLink key={item.to} collapsed={collapsed} item={item} />
+          ))}
+          {footerItems.length > 0 ? (
+            <div className="mt-auto flex flex-col gap-1 border-t border-line pt-3">
+              {footerItems.map((item) => (
+                <NavLink key={item.to} collapsed={collapsed} item={item} />
+              ))}
+            </div>
+          ) : null}
+        </nav>
+        <div className="flex flex-col border-t border-line">
+          {account ? (
+            <div className="px-3 py-2">
+              <AccountMenu
+                collapsed={collapsed}
+                email={account.email}
+                name={account.name}
+                onLogout={account.onLogout}
+                role={account.role}
+                settingsTo={account.settingsTo ?? '/settings'}
+              />
+            </div>
+          ) : null}
+          <div
+            className="flex border-t border-line px-3 py-2 data-[collapsed=true]:justify-center"
+            data-collapsed={collapsed}
+          >
+            <button
+              type="button"
+              onClick={() => setCollapsed((current) => !current)}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!collapsed}
+              className="group flex cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-subtle outline-none transition hover:bg-white/5 hover:text-white"
+            >
+              <SidebarPanelIcon className="size-5 shrink-0" />
+            </button>
+          </div>
         </div>
-      ) : null}
-    </aside>
-    <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">{children}</main>
-  </div>
-);
+      </aside>
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</main>
+    </div>
+  );
+};
 
 export const PageHeader = ({
   actions,
@@ -219,7 +300,7 @@ export const PageHeader = ({
   title: string;
 }): ReactElement => (
   <div className="flex items-center justify-between gap-4 border-b border-grey-700t px-6 py-4">
-    <h1 className="font-grotesque text-2xl font-semibold text-white">{title}</h1>
+    <h1 className="truncate font-grotesque text-[30px] font-semibold leading-9 text-white">{title}</h1>
     {actions}
   </div>
 );

@@ -13,6 +13,8 @@ const sizeMap = {
   large: 10,
   medium: 8,
   small: 8,
+  /** 44px, matching the filter dropdowns it sits beside. */
+  control: 0,
 };
 
 export const typeMap = {
@@ -77,6 +79,7 @@ const getButtonTextSize = ({
     xl: 'text-[17px] leading-6',
     small: 'text-sm',
     medium: 'text-base',
+    control: 'text-[0.9375rem] leading-6',
   })[size];
 
 const getButtonStyle = ({
@@ -90,6 +93,10 @@ const getButtonStyle = ({
     return {
       padding: '8px 0',
     };
+  }
+
+  if (size === 'control') {
+    return { boxSizing: 'border-box', height: '44px', padding: '0 16px' };
   }
 
   if (size === 'large' && type !== 'low-priority' && type !== 'delete') {

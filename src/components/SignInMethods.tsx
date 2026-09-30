@@ -1,9 +1,13 @@
+import { EnvelopeIcon } from '@heroicons/react/24/outline';
 import { Suspense, use, type ReactElement } from 'react';
 import { Button } from './Button';
 import { Loader } from './Loader';
 import { GitHubIcon, GoogleIcon, MicrosoftIcon, SlackIcon } from './providerIcons';
 
+export const CREDENTIALS_PROVIDER = 'credentials';
+
 const labels: Record<string, string> = {
+  credentials: 'Continue with email',
   github: 'Continue with GitHub',
   google: 'Continue with Google',
   microsoft: 'Continue with Microsoft',
@@ -71,10 +75,11 @@ const ProviderButtons = ({
   providers: Promise<string[]>;
 }): ReactElement => {
   const list = use(providers);
+  const social = list.filter((hint) => hint !== CREDENTIALS_PROVIDER);
 
   return (
     <>
-      {list.map((hint) => (
+      {social.map((hint) => (
         <Button
           key={hint}
           button={{
@@ -86,6 +91,17 @@ const ProviderButtons = ({
           }}
         />
       ))}
+      {list.includes(CREDENTIALS_PROVIDER) ? (
+        <Button
+          button={{
+            IconEnd: EnvelopeIcon,
+            onClick: () => onSelect(CREDENTIALS_PROVIDER),
+            size: 'large',
+            text: signInProviderLabel(CREDENTIALS_PROVIDER),
+            type: 'primary',
+          }}
+        />
+      ) : null}
     </>
   );
 };

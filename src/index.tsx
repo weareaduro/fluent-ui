@@ -39,7 +39,15 @@ export { ProductLockup } from './components/ProductLockup';
 
 export { AuthFrame, AuthTitle } from './components/AuthFrame';
 
-export { SignInMethods, loadSignetProviders, signInProviderLabel, signetProviders } from './components/SignInMethods';
+export {
+  CREDENTIALS_PROVIDER,
+  SignInMethods,
+  loadSignetProviders,
+  signInProviderLabel,
+  signetProviders,
+} from './components/SignInMethods';
+
+export type { AuthMetaEnv } from './authMetaEnv';
 
 export { LegalNotice } from './components/LegalNotice';
 

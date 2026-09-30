@@ -5,7 +5,7 @@ import { AuthFrame, AuthTitle } from './AuthFrame';
 import { Button } from './Button';
 import { Input } from './Input';
 import { LegalNotice } from './LegalNotice';
-import { SignInMethods } from './SignInMethods';
+import { CREDENTIALS_PROVIDER, SignInMethods } from './SignInMethods';
 
 export const SignInScreen = ({
   emphasizeProduct = true,
@@ -119,14 +119,16 @@ export const SignInScreen = ({
     <AuthFrame emphasizeProduct={emphasizeProduct} footer={frameFooter} productName={productName}>
       <AuthTitle title="Welcome back!" subtitle="Select one of the options below" />
       <div className="flex w-full flex-col gap-3">
-        <SignInMethods issuer={issuer} onSelect={onSelect} />
-        <Button
-          button={{
-            IconEnd: EnvelopeIcon,
-            onClick: () => setEmailStep(true),
-            size: 'large',
-            text: 'Continue with email',
-            type: 'primary',
+        <SignInMethods
+          issuer={issuer}
+          onSelect={(hint) => {
+            if (hint === CREDENTIALS_PROVIDER) {
+              setEmailStep(true);
+
+              return;
+            }
+
+            onSelect(hint);
           }}
         />
         {error ? <p className="text-center text-sm text-red-400">{error}</p> : null}
