@@ -1,0 +1,23 @@
+import type { ReactElement } from 'react';
+
+/** Product wordmark. Blaze paints the product name with the primary colour. Signet and Ensemble keep the whole line grey. */
+export const ProductLockup = ({
+  className = 'text-[10px] font-bold uppercase tracking-[0.12em] text-subtle/50',
+  emphasizeProduct = false,
+  productName,
+}: {
+  className?: string;
+  emphasizeProduct?: boolean;
+  productName: string;
+}): ReactElement => (
+  <span className={className}>
+    {emphasizeProduct ? (
+      <span className="inline-block bg-primary-main bg-clip-text text-transparent [-webkit-text-fill-color:transparent]">
+        {productName}
+      </span>
+    ) : (
+      productName
+    )}
+    {' by Aduro'}
+  </span>
+);
