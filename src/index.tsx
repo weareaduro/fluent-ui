@@ -47,7 +47,7 @@ export {
   signetProviders,
 } from './components/SignInMethods';
 
-export type { AuthMetaEnv } from './authMetaEnv';
+export { readAuthMeta, type AuthMeta, type AuthMetaEnv } from './authMetaEnv';
 
 export { LegalNotice } from './components/LegalNotice';
 

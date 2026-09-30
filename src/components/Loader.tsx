@@ -1,7 +1,7 @@
 export const Loader = ({
   width = 38,
   height = 38,
-  fill = '#d17238',
+  fill = 'currentColor',
   className,
   label = 'Loading',
 }: {
@@ -16,7 +16,7 @@ export const Loader = ({
     height={height}
     viewBox="0 0 38 38"
     xmlns="http://www.w3.org/2000/svg"
-    className={className}
+    className={`text-orange-100 ${className ?? ''}`}
     role="img"
     aria-label={label}
   >

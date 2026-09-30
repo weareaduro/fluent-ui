@@ -7,7 +7,7 @@ import { jsx, jsxs } from "react/jsx-runtime";
 var Loader = ({
   width = 38,
   height = 38,
-  fill = "#d17238",
+  fill = "currentColor",
   className,
   label = "Loading"
 }) => /* @__PURE__ */ jsxs(
@@ -17,7 +17,7 @@ var Loader = ({
     height,
     viewBox: "0 0 38 38",
     xmlns: "http://www.w3.org/2000/svg",
-    className,
+    className: `text-orange-100 ${className ?? ""}`,
     role: "img",
     "aria-label": label,
     children: [
@@ -1645,6 +1645,21 @@ var SignInMethods = ({
   }
 );
 
+// src/authMetaEnv.ts
+var present = (value) => {
+  const trimmed = value?.trim() ?? "";
+  return trimmed === "" ? void 0 : trimmed;
+};
+var readAuthMeta = (env) => {
+  const registration = present(env.PUBLIC_ALLOW_REGISTRATION);
+  return {
+    allowRegistration: registration !== "false" && registration !== "0",
+    signetAccessCookie: present(env.PUBLIC_SIGNET_ACCESS_COOKIE) ?? "signet-access",
+    signetClientId: present(env.PUBLIC_SIGNET_CLIENT_ID),
+    signetEndpoint: present(env.PUBLIC_SIGNET_ENDPOINT)
+  };
+};
+
 // src/components/LegalNotice.tsx
 import { jsx as jsx17, jsxs as jsxs15 } from "react/jsx-runtime";
 var defaultLinks = {
@@ -2155,6 +2170,7 @@ export {
   elements,
   getIconButtonStyles,
   loadSignetProviders,
+  readAuthMeta,
   signInProviderLabel,
   signetProviders
 };
