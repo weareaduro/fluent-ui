@@ -1452,7 +1452,7 @@ function ConfirmDialog({
 
 // src/components/ProductLockup.tsx
 import { jsx as jsx13, jsxs as jsxs11 } from "react/jsx-runtime";
-var sidebarLabelClassName = "font-grotesque text-sm font-bold leading-5 text-grey-500 capitalize";
+var sidebarLabelClassName = "font-grotesque text-sm font-bold leading-5 text-grey-500 uppercase";
 var ProductLockup = ({
   className = sidebarLabelClassName,
   emphasizeProduct = true,

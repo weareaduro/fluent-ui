@@ -1,8 +1,8 @@
 import type { ReactElement } from 'react';
 
-/** Sidebar "Administration" and "Product by Aduro": 14px / 20px, capitalized. */
+/** Sidebar "Administration" and "Product by Aduro": 14px / 20px, uppercase, weight 700. */
 export const sidebarLabelClassName =
-  'font-grotesque text-sm font-bold leading-5 text-grey-500 capitalize';
+  'font-grotesque text-sm font-bold leading-5 text-grey-500 uppercase';
 
 /** Product wordmark. The product name uses the primary colour. "by Aduro" stays grey. */
 export const ProductLockup = ({
