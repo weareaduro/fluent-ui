@@ -7,8 +7,9 @@ import {
 import { Link } from '@tanstack/react-router';
 import { useState, type ReactElement, type ReactNode } from 'react';
 import logo from '../logo.svg';
+import { OrganisationAvatar } from './OrganisationAvatar';
 import { PersonAvatar } from './PersonAvatar';
-import { ProductLockup } from './ProductLockup';
+import { ProductLockup, sidebarLabelClassName } from './ProductLockup';
 
 const AduroMark = ({ className = 'h-5 w-auto' }: { className?: string }): ReactElement => (
   <svg width="33" height="29" viewBox="0 0 33 29" fill="none" aria-hidden="true" className={className}>
@@ -48,64 +49,11 @@ export type AppOrganisation = {
   website?: string;
 };
 
-const organisationFaviconUrl = (website: string | undefined): string | null => {
-  const trimmed = website?.trim();
-
-  if (!trimmed) return null;
-
-  try {
-    const hostname = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`).hostname;
-
-    if (hostname === '') return null;
-
-    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
-  } catch {
-    return null;
-  }
-};
-
-const OrganisationAvatar = ({
-  label,
-  website,
-}: {
-  label: string;
-  website?: string;
-}): ReactElement => {
-  const src = organisationFaviconUrl(website);
-  const [failed, setFailed] = useState(false);
-  const [shown, setShown] = useState(false);
-
-  return (
-    <span className="relative inline-flex size-7 shrink-0">
-      <span className="flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 text-[11px] font-bold text-white">
-        {initials(label)}
-      </span>
-      {src && !failed ? (
-        <img
-          src={src}
-          alt=""
-          className={`absolute inset-0 size-full rounded-full border border-line object-cover ${shown ? '' : 'invisible'}`}
-          onLoad={() => setShown(true)}
-          onError={() => setFailed(true)}
-        />
-      ) : null}
-    </span>
-  );
-};
-
 const linkClassName =
   'group flex items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-[15px] font-semibold leading-5 text-low-priority outline-none transition hover:bg-white/5 hover:text-white active:shadow-focused-dark data-[status=active]:bg-orange-100/10 data-[status=active]:text-orange-100';
 
 const menuItemClassName =
   'flex w-full items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white cursor-pointer';
-
-const initials = (name: string): string =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('') || 'A';
 
 const NavLink = ({
   collapsed,
@@ -205,7 +153,7 @@ const OrganisationMenu = ({
         aria-label="Switch organisation"
         className="flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10"
       >
-        <OrganisationAvatar label={label} {...(current?.website ? { website: current.website } : {})} />
+        <OrganisationAvatar name={label} {...(current?.website ? { website: current.website } : {})} />
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{label}</span>
         <ChevronDownIcon className="size-4 shrink-0 text-subtle" />
       </MenuButton>
@@ -221,7 +169,7 @@ const OrganisationMenu = ({
               onClick={() => onChange(option.value)}
               className={menuItemClassName}
             >
-              <OrganisationAvatar label={option.label} {...(option.website ? { website: option.website } : {})} />
+              <OrganisationAvatar name={option.label} {...(option.website ? { website: option.website } : {})} />
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
             </button>
           </MenuItem>
@@ -302,7 +250,7 @@ export const AppFrame = ({
           {footerItems.length > 0 ? (
             <div className="mt-auto flex flex-col gap-1">
               {collapsed ? null : (
-                <span className="px-2.5 pb-1 pt-2 font-grotesque text-sm font-semibold leading-6 text-grey-500">
+                <span className={`px-2.5 pb-1 pt-2 ${sidebarLabelClassName}`}>
                   Administration
                 </span>
               )}

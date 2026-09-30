@@ -1,7 +1,7 @@
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import type { ReactElement, ReactNode } from 'react';
 import logo from '../logo.svg';
-import { ProductLockup } from './ProductLockup';
+import { ProductLockup, sidebarLabelClassName } from './ProductLockup';
 
 export const AuthFrame = ({
   children,
@@ -36,7 +36,7 @@ export const AuthFrame = ({
         <span className="inline-flex flex-col items-center">
           <img src={logoSrc ?? logo} alt="" className="h-8 w-auto" />
           <ProductLockup
-            className="mt-3 font-grotesque text-sm font-semibold leading-6 text-grey-500"
+            className={`mt-3 ${sidebarLabelClassName}`}
             emphasizeProduct={emphasizeProduct}
             productName={productName}
           />

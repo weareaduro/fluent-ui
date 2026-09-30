@@ -1452,8 +1452,9 @@ function ConfirmDialog({
 
 // src/components/ProductLockup.tsx
 import { jsx as jsx13, jsxs as jsxs11 } from "react/jsx-runtime";
+var sidebarLabelClassName = "font-grotesque text-sm font-semibold leading-5 text-grey-500 capitalize";
 var ProductLockup = ({
-  className = "font-grotesque text-sm font-semibold leading-6 text-grey-500",
+  className = sidebarLabelClassName,
   emphasizeProduct = true,
   productName
 }) => /* @__PURE__ */ jsxs11("span", { className, children: [
@@ -1493,7 +1494,7 @@ var AuthFrame = ({
       /* @__PURE__ */ jsx14(
         ProductLockup,
         {
-          className: "mt-3 font-grotesque text-sm font-semibold leading-6 text-grey-500",
+          className: `mt-3 ${sidebarLabelClassName}`,
           emphasizeProduct,
           productName
         }
@@ -1733,11 +1734,66 @@ var PersonAvatar = ({
   ] });
 };
 
+// src/components/OrganisationAvatar.tsx
+import { useState as useState4 } from "react";
+
+// src/organisationFavicon.ts
+var organisationFaviconUrl = (website, size = 128) => {
+  const trimmed = website?.trim();
+  if (!trimmed) return null;
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  try {
+    const url = new URL(withProtocol);
+    if (url.hostname === "") return null;
+    const params = new URLSearchParams({
+      client: "SOCIAL",
+      type: "FAVICON",
+      fallback_opts: "TYPE,SIZE,URL",
+      url: `${url.protocol}//${url.hostname}`,
+      size: String(size)
+    });
+    return `https://t1.gstatic.com/faviconV2?${params.toString()}`;
+  } catch {
+    return null;
+  }
+};
+
+// src/components/OrganisationAvatar.tsx
+import { jsx as jsx19, jsxs as jsxs17 } from "react/jsx-runtime";
+var sizeClassName2 = {
+  small: "size-7 text-[11px]",
+  medium: "size-8 text-xs"
+};
+var initials2 = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "A";
+var OrganisationAvatar = ({
+  name,
+  size = "small",
+  website
+}) => {
+  const src = organisationFaviconUrl(website);
+  const [failed, setFailed] = useState4(false);
+  const [shown, setShown] = useState4(false);
+  const box = sizeClassName2[size];
+  return /* @__PURE__ */ jsxs17("span", { className: `relative inline-flex shrink-0 ${box}`, children: [
+    /* @__PURE__ */ jsx19("span", { className: "flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 font-bold text-white", children: initials2(name) }),
+    src && !failed ? /* @__PURE__ */ jsx19(
+      "img",
+      {
+        src,
+        alt: "",
+        className: `absolute inset-0 size-full rounded-full border border-line object-cover ${shown ? "" : "invisible"}`,
+        onLoad: () => setShown(true),
+        onError: () => setFailed(true)
+      }
+    ) : null
+  ] });
+};
+
 // src/components/SignInScreen.tsx
 import { EnvelopeIcon as EnvelopeIcon2, LockClosedIcon } from "@heroicons/react/24/outline";
 import { useForm } from "@tanstack/react-form";
-import { useState as useState4 } from "react";
-import { Fragment as Fragment4, jsx as jsx19, jsxs as jsxs17 } from "react/jsx-runtime";
+import { useState as useState5 } from "react";
+import { Fragment as Fragment4, jsx as jsx20, jsxs as jsxs18 } from "react/jsx-runtime";
 var SignInScreen = ({
   emphasizeProduct = true,
   error,
@@ -1749,10 +1805,10 @@ var SignInScreen = ({
   showLegalNotice = true,
   submitting = false
 }) => {
-  const [emailStep, setEmailStep] = useState4(false);
-  const frameFooter = /* @__PURE__ */ jsxs17(Fragment4, { children: [
+  const [emailStep, setEmailStep] = useState5(false);
+  const frameFooter = /* @__PURE__ */ jsxs18(Fragment4, { children: [
     footer,
-    showLegalNotice ? /* @__PURE__ */ jsx19(LegalNotice, { productName }) : null
+    showLegalNotice ? /* @__PURE__ */ jsx20(LegalNotice, { productName }) : null
   ] });
   const form = useForm({
     defaultValues: { email: "", password: "" },
@@ -1761,7 +1817,7 @@ var SignInScreen = ({
     }
   });
   if (emailStep) {
-    return /* @__PURE__ */ jsxs17(
+    return /* @__PURE__ */ jsxs18(
       AuthFrame,
       {
         emphasizeProduct,
@@ -1769,8 +1825,8 @@ var SignInScreen = ({
         onBack: () => setEmailStep(false),
         productName,
         children: [
-          /* @__PURE__ */ jsx19(AuthTitle, { title: "Log in" }),
-          /* @__PURE__ */ jsxs17(
+          /* @__PURE__ */ jsx20(AuthTitle, { title: "Log in" }),
+          /* @__PURE__ */ jsxs18(
             "form",
             {
               className: "w-full space-y-5",
@@ -1780,11 +1836,11 @@ var SignInScreen = ({
                 void form.handleSubmit();
               },
               children: [
-                /* @__PURE__ */ jsx19(
+                /* @__PURE__ */ jsx20(
                   form.Field,
                   {
                     name: "email",
-                    children: (field) => /* @__PURE__ */ jsx19(
+                    children: (field) => /* @__PURE__ */ jsx20(
                       Input,
                       {
                         name: "email",
@@ -1800,11 +1856,11 @@ var SignInScreen = ({
                     )
                   }
                 ),
-                /* @__PURE__ */ jsx19(
+                /* @__PURE__ */ jsx20(
                   form.Field,
                   {
                     name: "password",
-                    children: (field) => /* @__PURE__ */ jsx19(
+                    children: (field) => /* @__PURE__ */ jsx20(
                       Input,
                       {
                         name: "password",
@@ -1820,7 +1876,7 @@ var SignInScreen = ({
                     )
                   }
                 ),
-                /* @__PURE__ */ jsx19(
+                /* @__PURE__ */ jsx20(
                   Button,
                   {
                     button: {
@@ -1833,7 +1889,7 @@ var SignInScreen = ({
                     }
                   }
                 ),
-                error ? /* @__PURE__ */ jsx19("p", { className: "text-center text-sm text-red-400", children: error }) : null
+                error ? /* @__PURE__ */ jsx20("p", { className: "text-center text-sm text-red-400", children: error }) : null
               ]
             }
           )
@@ -1841,10 +1897,10 @@ var SignInScreen = ({
       }
     );
   }
-  return /* @__PURE__ */ jsxs17(AuthFrame, { emphasizeProduct, footer: frameFooter, productName, children: [
-    /* @__PURE__ */ jsx19(AuthTitle, { title: "Welcome back!", subtitle: "Select one of the options below" }),
-    /* @__PURE__ */ jsxs17("div", { className: "flex w-full flex-col gap-3", children: [
-      /* @__PURE__ */ jsx19(
+  return /* @__PURE__ */ jsxs18(AuthFrame, { emphasizeProduct, footer: frameFooter, productName, children: [
+    /* @__PURE__ */ jsx20(AuthTitle, { title: "Welcome back!", subtitle: "Select one of the options below" }),
+    /* @__PURE__ */ jsxs18("div", { className: "flex w-full flex-col gap-3", children: [
+      /* @__PURE__ */ jsx20(
         SignInMethods,
         {
           issuer,
@@ -1857,7 +1913,7 @@ var SignInScreen = ({
           }
         }
       ),
-      error ? /* @__PURE__ */ jsx19("p", { className: "text-center text-sm text-red-400", children: error }) : null
+      error ? /* @__PURE__ */ jsx20("p", { className: "text-center text-sm text-red-400", children: error }) : null
     ] })
   ] });
 };
@@ -1870,14 +1926,14 @@ import {
   Cog6ToothIcon
 } from "@heroicons/react/24/outline";
 import { Link as Link3 } from "@tanstack/react-router";
-import { useState as useState5 } from "react";
-import { jsx as jsx20, jsxs as jsxs18 } from "react/jsx-runtime";
-var AduroMark = ({ className = "h-5 w-auto" }) => /* @__PURE__ */ jsxs18("svg", { width: "33", height: "29", viewBox: "0 0 33 29", fill: "none", "aria-hidden": "true", className, children: [
-  /* @__PURE__ */ jsx20("path", { d: "M8.40666 22.4259L15.6041 9.9563C15.6488 9.87583 15.6756 9.78642 15.6756 9.69403V1.27764C15.6756 0.74118 14.9633 0.55044 14.6951 1.01537L0.0737181 26.3391C-0.19749 26.807 0.333005 27.3315 0.797933 27.0513L8.22188 22.6107C8.29937 22.566 8.36196 22.5004 8.40666 22.4229V22.4259Z", fill: "white" }),
-  /* @__PURE__ */ jsx20("path", { d: "M16.8225 9.96206L24.0647 22.5062C24.1094 22.5837 24.1749 22.6492 24.2524 22.6969L31.6346 27.0601C32.0996 27.3343 32.6271 26.8127 32.3559 26.3448L17.7315 1.01219C17.4633 0.547267 16.751 0.738006 16.751 1.27446V9.69682C16.751 9.7892 16.7748 9.87861 16.8225 9.95908V9.96206Z", fill: "white" }),
-  /* @__PURE__ */ jsx20("path", { d: "M23.3771 23.5137H8.95834C8.86297 23.5137 8.77058 23.5405 8.69011 23.5882L1.68937 27.7755C1.2304 28.0497 1.4271 28.7531 1.96057 28.7531H30.4613C30.9947 28.7531 31.1885 28.0467 30.7295 27.7755L23.6483 23.5882C23.5678 23.5405 23.4754 23.5137 23.3801 23.5137H23.3771Z", fill: "white" })
+import { useState as useState6 } from "react";
+import { jsx as jsx21, jsxs as jsxs19 } from "react/jsx-runtime";
+var AduroMark = ({ className = "h-5 w-auto" }) => /* @__PURE__ */ jsxs19("svg", { width: "33", height: "29", viewBox: "0 0 33 29", fill: "none", "aria-hidden": "true", className, children: [
+  /* @__PURE__ */ jsx21("path", { d: "M8.40666 22.4259L15.6041 9.9563C15.6488 9.87583 15.6756 9.78642 15.6756 9.69403V1.27764C15.6756 0.74118 14.9633 0.55044 14.6951 1.01537L0.0737181 26.3391C-0.19749 26.807 0.333005 27.3315 0.797933 27.0513L8.22188 22.6107C8.29937 22.566 8.36196 22.5004 8.40666 22.4229V22.4259Z", fill: "white" }),
+  /* @__PURE__ */ jsx21("path", { d: "M16.8225 9.96206L24.0647 22.5062C24.1094 22.5837 24.1749 22.6492 24.2524 22.6969L31.6346 27.0601C32.0996 27.3343 32.6271 26.8127 32.3559 26.3448L17.7315 1.01219C17.4633 0.547267 16.751 0.738006 16.751 1.27446V9.69682C16.751 9.7892 16.7748 9.87861 16.8225 9.95908V9.96206Z", fill: "white" }),
+  /* @__PURE__ */ jsx21("path", { d: "M23.3771 23.5137H8.95834C8.86297 23.5137 8.77058 23.5405 8.69011 23.5882L1.68937 27.7755C1.2304 28.0497 1.4271 28.7531 1.96057 28.7531H30.4613C30.9947 28.7531 31.1885 28.0467 30.7295 27.7755L23.6483 23.5882C23.5678 23.5405 23.4754 23.5137 23.3801 23.5137H23.3771Z", fill: "white" })
 ] });
-var SidebarPanelIcon = ({ className = "" }) => /* @__PURE__ */ jsx20(
+var SidebarPanelIcon = ({ className = "" }) => /* @__PURE__ */ jsx21(
   "svg",
   {
     xmlns: "http://www.w3.org/2000/svg",
@@ -1887,7 +1943,7 @@ var SidebarPanelIcon = ({ className = "" }) => /* @__PURE__ */ jsx20(
     stroke: "currentColor",
     "aria-hidden": "true",
     className,
-    children: /* @__PURE__ */ jsx20(
+    children: /* @__PURE__ */ jsx21(
       "path",
       {
         strokeLinecap: "round",
@@ -1897,45 +1953,12 @@ var SidebarPanelIcon = ({ className = "" }) => /* @__PURE__ */ jsx20(
     )
   }
 );
-var organisationFaviconUrl = (website) => {
-  const trimmed = website?.trim();
-  if (!trimmed) return null;
-  try {
-    const hostname = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`).hostname;
-    if (hostname === "") return null;
-    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
-  } catch {
-    return null;
-  }
-};
-var OrganisationAvatar = ({
-  label,
-  website
-}) => {
-  const src = organisationFaviconUrl(website);
-  const [failed, setFailed] = useState5(false);
-  const [shown, setShown] = useState5(false);
-  return /* @__PURE__ */ jsxs18("span", { className: "relative inline-flex size-7 shrink-0", children: [
-    /* @__PURE__ */ jsx20("span", { className: "flex size-full items-center justify-center rounded-full border border-orange-100/40 bg-orange-100 text-[11px] font-bold text-white", children: initials2(label) }),
-    src && !failed ? /* @__PURE__ */ jsx20(
-      "img",
-      {
-        src,
-        alt: "",
-        className: `absolute inset-0 size-full rounded-full border border-line object-cover ${shown ? "" : "invisible"}`,
-        onLoad: () => setShown(true),
-        onError: () => setFailed(true)
-      }
-    ) : null
-  ] });
-};
 var linkClassName = "group flex items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-[15px] font-semibold leading-5 text-low-priority outline-none transition hover:bg-white/5 hover:text-white active:shadow-focused-dark data-[status=active]:bg-orange-100/10 data-[status=active]:text-orange-100";
 var menuItemClassName = "flex w-full items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white cursor-pointer";
-var initials2 = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "A";
 var NavLink = ({
   collapsed,
   item
-}) => /* @__PURE__ */ jsxs18(
+}) => /* @__PURE__ */ jsxs19(
   Link3,
   {
     to: item.to,
@@ -1944,8 +1967,8 @@ var NavLink = ({
     className: `${linkClassName} data-[collapsed=true]:justify-center`,
     "data-collapsed": collapsed,
     children: [
-      item.Icon ? /* @__PURE__ */ jsx20(item.Icon, { className: "size-5 shrink-0" }) : null,
-      collapsed ? null : /* @__PURE__ */ jsx20("span", { className: "truncate", children: item.label })
+      item.Icon ? /* @__PURE__ */ jsx21(item.Icon, { className: "size-5 shrink-0" }) : null,
+      collapsed ? null : /* @__PURE__ */ jsx21("span", { className: "truncate", children: item.label })
     ]
   }
 );
@@ -1956,44 +1979,44 @@ var AccountMenu = ({
   onLogout,
   role,
   settingsTo
-}) => /* @__PURE__ */ jsxs18(Menu, { children: [
-  /* @__PURE__ */ jsxs18(
+}) => /* @__PURE__ */ jsxs19(Menu, { children: [
+  /* @__PURE__ */ jsxs19(
     MenuButton,
     {
       "aria-label": "Account menu",
       className: "group flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2 py-2 text-left outline-none transition hover:bg-white/5 data-[collapsed=true]:justify-center",
       "data-collapsed": collapsed,
       children: [
-        /* @__PURE__ */ jsx20(PersonAvatar, { email, name }),
-        collapsed ? null : /* @__PURE__ */ jsxs18("span", { className: "min-w-0 flex-1", children: [
-          /* @__PURE__ */ jsx20("span", { className: "block truncate text-sm font-semibold text-white", children: name }),
-          role ? /* @__PURE__ */ jsx20("span", { className: "block truncate text-xs text-subtle/70", children: role }) : null,
-          !role && email ? /* @__PURE__ */ jsx20("span", { className: "block truncate text-xs text-subtle/70", children: email }) : null
+        /* @__PURE__ */ jsx21(PersonAvatar, { email, name }),
+        collapsed ? null : /* @__PURE__ */ jsxs19("span", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsx21("span", { className: "block truncate text-sm font-semibold text-white", children: name }),
+          role ? /* @__PURE__ */ jsx21("span", { className: "block truncate text-xs text-subtle/70", children: role }) : null,
+          !role && email ? /* @__PURE__ */ jsx21("span", { className: "block truncate text-xs text-subtle/70", children: email }) : null
         ] }),
-        collapsed ? null : /* @__PURE__ */ jsx20(ChevronDownIcon5, { className: "size-4 shrink-0 text-subtle/70 group-hover:text-white" })
+        collapsed ? null : /* @__PURE__ */ jsx21(ChevronDownIcon5, { className: "size-4 shrink-0 text-subtle/70 group-hover:text-white" })
       ]
     }
   ),
-  /* @__PURE__ */ jsxs18(
+  /* @__PURE__ */ jsxs19(
     MenuItems,
     {
       portal: true,
       anchor: { to: "top start", gap: 6 },
       className: "z-50 flex min-w-60 flex-col rounded-[2px] border border-line bg-secondary text-white shadow-xl outline-none",
       children: [
-        /* @__PURE__ */ jsxs18("div", { className: "flex flex-col border-b border-line px-3 py-3", children: [
-          /* @__PURE__ */ jsx20("span", { className: "truncate text-sm font-semibold text-white", children: name }),
-          role ? /* @__PURE__ */ jsx20("span", { className: "truncate text-xs text-subtle", children: role }) : null,
-          email ? /* @__PURE__ */ jsx20("span", { className: "truncate text-xs text-subtle", children: email }) : null
+        /* @__PURE__ */ jsxs19("div", { className: "flex flex-col border-b border-line px-3 py-3", children: [
+          /* @__PURE__ */ jsx21("span", { className: "truncate text-sm font-semibold text-white", children: name }),
+          role ? /* @__PURE__ */ jsx21("span", { className: "truncate text-xs text-subtle", children: role }) : null,
+          email ? /* @__PURE__ */ jsx21("span", { className: "truncate text-xs text-subtle", children: email }) : null
         ] }),
-        /* @__PURE__ */ jsxs18("div", { className: "p-1.5", children: [
-          /* @__PURE__ */ jsx20(MenuItem, { children: /* @__PURE__ */ jsxs18(Link3, { to: settingsTo, className: menuItemClassName, children: [
-            /* @__PURE__ */ jsx20(Cog6ToothIcon, { className: "size-4 shrink-0 text-subtle" }),
-            /* @__PURE__ */ jsx20("span", { children: "Settings" })
+        /* @__PURE__ */ jsxs19("div", { className: "p-1.5", children: [
+          /* @__PURE__ */ jsx21(MenuItem, { children: /* @__PURE__ */ jsxs19(Link3, { to: settingsTo, className: menuItemClassName, children: [
+            /* @__PURE__ */ jsx21(Cog6ToothIcon, { className: "size-4 shrink-0 text-subtle" }),
+            /* @__PURE__ */ jsx21("span", { children: "Settings" })
           ] }) }),
-          /* @__PURE__ */ jsx20(MenuItem, { children: /* @__PURE__ */ jsxs18("button", { type: "button", onClick: onLogout, className: menuItemClassName, children: [
-            /* @__PURE__ */ jsx20(ArrowLeftStartOnRectangleIcon, { className: "size-4 shrink-0 text-subtle" }),
-            /* @__PURE__ */ jsx20("span", { children: "Logout" })
+          /* @__PURE__ */ jsx21(MenuItem, { children: /* @__PURE__ */ jsxs19("button", { type: "button", onClick: onLogout, className: menuItemClassName, children: [
+            /* @__PURE__ */ jsx21(ArrowLeftStartOnRectangleIcon, { className: "size-4 shrink-0 text-subtle" }),
+            /* @__PURE__ */ jsx21("span", { children: "Logout" })
           ] }) })
         ] })
       ]
@@ -2007,34 +2030,34 @@ var OrganisationMenu = ({
 }) => {
   const current = options.find((option) => option.value === value) ?? options[0];
   const label = current?.label ?? "Organisation";
-  return /* @__PURE__ */ jsxs18(Menu, { children: [
-    /* @__PURE__ */ jsxs18(
+  return /* @__PURE__ */ jsxs19(Menu, { children: [
+    /* @__PURE__ */ jsxs19(
       MenuButton,
       {
         "aria-label": "Switch organisation",
         className: "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10",
         children: [
-          /* @__PURE__ */ jsx20(OrganisationAvatar, { label, ...current?.website ? { website: current.website } : {} }),
-          /* @__PURE__ */ jsx20("span", { className: "min-w-0 flex-1 truncate text-sm font-semibold text-white", children: label }),
-          /* @__PURE__ */ jsx20(ChevronDownIcon5, { className: "size-4 shrink-0 text-subtle" })
+          /* @__PURE__ */ jsx21(OrganisationAvatar, { name: label, ...current?.website ? { website: current.website } : {} }),
+          /* @__PURE__ */ jsx21("span", { className: "min-w-0 flex-1 truncate text-sm font-semibold text-white", children: label }),
+          /* @__PURE__ */ jsx21(ChevronDownIcon5, { className: "size-4 shrink-0 text-subtle" })
         ]
       }
     ),
-    /* @__PURE__ */ jsx20(
+    /* @__PURE__ */ jsx21(
       MenuItems,
       {
         portal: true,
         anchor: { to: "bottom start", gap: 6 },
         className: "z-50 flex min-w-56 flex-col rounded-[2px] border border-line bg-secondary p-1.5 text-white shadow-xl outline-none",
-        children: options.map((option) => /* @__PURE__ */ jsx20(MenuItem, { children: /* @__PURE__ */ jsxs18(
+        children: options.map((option) => /* @__PURE__ */ jsx21(MenuItem, { children: /* @__PURE__ */ jsxs19(
           "button",
           {
             type: "button",
             onClick: () => onChange(option.value),
             className: menuItemClassName,
             children: [
-              /* @__PURE__ */ jsx20(OrganisationAvatar, { label: option.label, ...option.website ? { website: option.website } : {} }),
-              /* @__PURE__ */ jsx20("span", { className: "min-w-0 flex-1 truncate", children: option.label })
+              /* @__PURE__ */ jsx21(OrganisationAvatar, { name: option.label, ...option.website ? { website: option.website } : {} }),
+              /* @__PURE__ */ jsx21("span", { className: "min-w-0 flex-1 truncate", children: option.label })
             ]
           }
         ) }, option.value))
@@ -2051,34 +2074,34 @@ var AppFrame = ({
   organisations,
   productName
 }) => {
-  const [collapsed, setCollapsed] = useState5(false);
-  return /* @__PURE__ */ jsxs18("div", { className: "flex h-screen w-full overflow-hidden bg-primary text-white", children: [
-    /* @__PURE__ */ jsxs18(
+  const [collapsed, setCollapsed] = useState6(false);
+  return /* @__PURE__ */ jsxs19("div", { className: "flex h-screen w-full overflow-hidden bg-primary text-white", children: [
+    /* @__PURE__ */ jsxs19(
       "aside",
       {
         "data-collapsed": collapsed,
         className: "flex h-full shrink-0 flex-col border-r border-line bg-primary transition-all duration-150 data-[collapsed=false]:w-60 data-[collapsed=true]:w-[65px]",
         children: [
-          /* @__PURE__ */ jsx20(
+          /* @__PURE__ */ jsx21(
             "div",
             {
               className: "flex shrink-0 flex-col items-center justify-center px-4 data-[collapsed=false]:pb-3 data-[collapsed=false]:pt-4 data-[collapsed=true]:h-14",
               "data-collapsed": collapsed,
-              children: /* @__PURE__ */ jsxs18(
+              children: /* @__PURE__ */ jsxs19(
                 Link3,
                 {
                   to: "/",
                   "aria-label": `${productName} by Aduro`,
                   className: "inline-flex flex-col items-center gap-1.5",
                   children: [
-                    collapsed ? /* @__PURE__ */ jsx20(AduroMark, { className: "h-5 w-auto" }) : /* @__PURE__ */ jsx20("img", { src: logoSrc ?? logo_default, alt: "", className: "h-5 w-auto" }),
-                    collapsed ? null : /* @__PURE__ */ jsx20(ProductLockup, { productName })
+                    collapsed ? /* @__PURE__ */ jsx21(AduroMark, { className: "h-5 w-auto" }) : /* @__PURE__ */ jsx21("img", { src: logoSrc ?? logo_default, alt: "", className: "h-5 w-auto" }),
+                    collapsed ? null : /* @__PURE__ */ jsx21(ProductLockup, { productName })
                   ]
                 }
               )
             }
           ),
-          organisations && organisations.options.length > 0 && !collapsed ? /* @__PURE__ */ jsx20("div", { className: "px-3 pb-3", children: /* @__PURE__ */ jsx20(
+          organisations && organisations.options.length > 0 && !collapsed ? /* @__PURE__ */ jsx21("div", { className: "px-3 pb-3", children: /* @__PURE__ */ jsx21(
             OrganisationMenu,
             {
               onChange: organisations.onChange,
@@ -2086,22 +2109,22 @@ var AppFrame = ({
               value: organisations.value
             }
           ) }) : null,
-          /* @__PURE__ */ jsxs18(
+          /* @__PURE__ */ jsxs19(
             "nav",
             {
               "aria-label": "Main navigation",
               className: "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3",
               children: [
-                items.map((item) => /* @__PURE__ */ jsx20(NavLink, { collapsed, item }, item.to)),
-                footerItems.length > 0 ? /* @__PURE__ */ jsxs18("div", { className: "mt-auto flex flex-col gap-1", children: [
-                  collapsed ? null : /* @__PURE__ */ jsx20("span", { className: "px-2.5 pb-1 pt-2 font-grotesque text-sm font-semibold leading-6 text-grey-500", children: "Administration" }),
-                  footerItems.map((item) => /* @__PURE__ */ jsx20(NavLink, { collapsed, item }, item.to))
+                items.map((item) => /* @__PURE__ */ jsx21(NavLink, { collapsed, item }, item.to)),
+                footerItems.length > 0 ? /* @__PURE__ */ jsxs19("div", { className: "mt-auto flex flex-col gap-1", children: [
+                  collapsed ? null : /* @__PURE__ */ jsx21("span", { className: `px-2.5 pb-1 pt-2 ${sidebarLabelClassName}`, children: "Administration" }),
+                  footerItems.map((item) => /* @__PURE__ */ jsx21(NavLink, { collapsed, item }, item.to))
                 ] }) : null
               ]
             }
           ),
-          /* @__PURE__ */ jsxs18("div", { className: "flex flex-col border-t border-line", children: [
-            account ? /* @__PURE__ */ jsx20("div", { className: "px-3 py-2", children: /* @__PURE__ */ jsx20(
+          /* @__PURE__ */ jsxs19("div", { className: "flex flex-col border-t border-line", children: [
+            account ? /* @__PURE__ */ jsx21("div", { className: "px-3 py-2", children: /* @__PURE__ */ jsx21(
               AccountMenu,
               {
                 collapsed,
@@ -2112,12 +2135,12 @@ var AppFrame = ({
                 settingsTo: account.settingsTo ?? "/settings"
               }
             ) }) : null,
-            /* @__PURE__ */ jsx20(
+            /* @__PURE__ */ jsx21(
               "div",
               {
                 className: "flex border-t border-line px-3 py-2 data-[collapsed=true]:justify-center",
                 "data-collapsed": collapsed,
-                children: /* @__PURE__ */ jsx20(
+                children: /* @__PURE__ */ jsx21(
                   "button",
                   {
                     type: "button",
@@ -2125,7 +2148,7 @@ var AppFrame = ({
                     "aria-label": collapsed ? "Expand sidebar" : "Collapse sidebar",
                     "aria-expanded": !collapsed,
                     className: "group flex cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-subtle outline-none transition hover:bg-white/5 hover:text-white",
-                    children: /* @__PURE__ */ jsx20(SidebarPanelIcon, { className: "size-5 shrink-0" })
+                    children: /* @__PURE__ */ jsx21(SidebarPanelIcon, { className: "size-5 shrink-0" })
                   }
                 )
               }
@@ -2134,20 +2157,20 @@ var AppFrame = ({
         ]
       }
     ),
-    /* @__PURE__ */ jsx20("main", { className: "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden", children })
+    /* @__PURE__ */ jsx21("main", { className: "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden", children })
   ] });
 };
 var PageHeader = ({
   actions,
   title
-}) => /* @__PURE__ */ jsxs18("div", { className: "flex items-center justify-between gap-4 border-b border-grey-700t px-6 py-4", children: [
-  /* @__PURE__ */ jsx20("h1", { className: "truncate font-grotesque text-[30px] font-semibold leading-9 text-white", children: title }),
+}) => /* @__PURE__ */ jsxs19("div", { className: "flex items-center justify-between gap-4 border-b border-grey-700t px-6 py-4", children: [
+  /* @__PURE__ */ jsx21("h1", { className: "truncate font-grotesque text-[30px] font-semibold leading-9 text-white", children: title }),
   actions
 ] });
 
 // src/components/DataTable.tsx
-import { useState as useState6 } from "react";
-import { jsx as jsx21, jsxs as jsxs19 } from "react/jsx-runtime";
+import { useState as useState7 } from "react";
+import { jsx as jsx22, jsxs as jsxs20 } from "react/jsx-runtime";
 function DataTable({
   columns,
   empty = "Nothing here yet.",
@@ -2155,21 +2178,21 @@ function DataTable({
   rows,
   rowKey
 }) {
-  const [page, setPage] = useState6(1);
-  const [perPage, setPerPage] = useState6(pageSize);
+  const [page, setPage] = useState7(1);
+  const [perPage, setPerPage] = useState7(pageSize);
   const lastPage = Math.max(1, Math.ceil(rows.length / perPage));
   const current = Math.min(page, lastPage);
   const visible = rows.slice((current - 1) * perPage, current * perPage);
   const width = columns.length === 0 ? 100 : Math.floor(100 / columns.length);
-  return /* @__PURE__ */ jsxs19(TableContainer, { flush: true, className: "min-h-[320px]", children: [
-    /* @__PURE__ */ jsx21(
+  return /* @__PURE__ */ jsxs20(TableContainer, { flush: true, className: "min-h-[320px]", children: [
+    /* @__PURE__ */ jsx22(
       TableColumns,
       {
         widthType: "pc",
         columns: columns.map((column) => ({ heading: column.header, width }))
       }
     ),
-    visible.length === 0 ? /* @__PURE__ */ jsx21("p", { className: "px-5 py-6 text-sm text-subtle", children: empty }) : /* @__PURE__ */ jsx21(
+    visible.length === 0 ? /* @__PURE__ */ jsx22("p", { className: "px-5 py-6 text-sm text-subtle", children: empty }) : /* @__PURE__ */ jsx22(
       TableRows,
       {
         widthType: "pc",
@@ -2182,7 +2205,7 @@ function DataTable({
         }))
       }
     ),
-    /* @__PURE__ */ jsx21(
+    /* @__PURE__ */ jsx22(
       TablePagination,
       {
         page: current,
@@ -2223,6 +2246,7 @@ export {
   Modal,
   ModalFooter,
   MultiSelect,
+  OrganisationAvatar,
   PageHeader,
   PersonAvatar,
   Pill,
@@ -2238,7 +2262,9 @@ export {
   elements,
   getIconButtonStyles,
   loadSignetProviders,
+  organisationFaviconUrl,
   readAuthMeta,
+  sidebarLabelClassName,
   signInProviderLabel,
   signetProviders
 };

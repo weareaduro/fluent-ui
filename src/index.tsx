@@ -35,7 +35,7 @@ export { ConfirmDialog } from './components/ConfirmDialog';
 
 export { Button, Input };
 
-export { ProductLockup } from './components/ProductLockup';
+export { ProductLockup, sidebarLabelClassName } from './components/ProductLockup';
 
 export { AuthFrame, AuthTitle } from './components/AuthFrame';
 
@@ -52,6 +52,10 @@ export { readAuthMeta, type AuthMeta, type AuthMetaEnv } from './authMetaEnv';
 export { LegalNotice } from './components/LegalNotice';
 
 export { PersonAvatar } from './components/PersonAvatar';
+
+export { OrganisationAvatar } from './components/OrganisationAvatar';
+
+export { organisationFaviconUrl } from './organisationFavicon';
 
 export { SignInScreen } from './components/SignInScreen';
 
