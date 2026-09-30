@@ -41,6 +41,8 @@ export { AuthFrame, AuthTitle } from './components/AuthFrame';
 
 export { SignInMethods, loadSignetProviders, signInProviderLabel, signetProviders } from './components/SignInMethods';
 
+export { LegalNotice } from './components/LegalNotice';
+
 export { SignInScreen } from './components/SignInScreen';
 
 export { AppFrame, PageHeader, type AppNavItem } from './components/AppFrame';

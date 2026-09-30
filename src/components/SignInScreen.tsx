@@ -7,8 +7,7 @@ import { Input } from './Input';
 import { SignInMethods } from './SignInMethods';
 
 export const SignInScreen = ({
-  buttonType = 'tertiary',
-  emphasizeProduct = false,
+  emphasizeProduct = true,
   error,
   footer,
   issuer,
@@ -17,7 +16,6 @@ export const SignInScreen = ({
   productName,
   submitting = false,
 }: {
-  buttonType?: 'primary' | 'tertiary' | undefined;
   emphasizeProduct?: boolean | undefined;
   error?: string | undefined;
   footer?: ReactNode | undefined;
@@ -106,14 +104,14 @@ export const SignInScreen = ({
     <AuthFrame emphasizeProduct={emphasizeProduct} footer={footer} productName={productName}>
       <AuthTitle title="Welcome back!" subtitle="Select one of the options below" />
       <div className="flex w-full flex-col gap-3">
-        <SignInMethods buttonType={buttonType} issuer={issuer} onSelect={onSelect} />
+        <SignInMethods issuer={issuer} onSelect={onSelect} />
         <Button
           button={{
             IconEnd: EnvelopeIcon,
             onClick: () => setEmailStep(true),
             size: 'large',
             text: 'Continue with email',
-            type: buttonType === 'primary' ? 'secondary' : 'primary',
+            type: 'primary',
           }}
         />
         {error ? <p className="text-center text-sm text-red-400">{error}</p> : null}

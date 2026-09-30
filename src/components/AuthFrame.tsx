@@ -5,7 +5,7 @@ import { ProductLockup } from './ProductLockup';
 
 export const AuthFrame = ({
   children,
-  emphasizeProduct = false,
+  emphasizeProduct = true,
   footer,
   logoSrc,
   onBack,

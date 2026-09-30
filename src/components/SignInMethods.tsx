@@ -64,11 +64,9 @@ const providerIcons: Record<string, HeroIconType> = {
 };
 
 const ProviderButtons = ({
-  buttonType,
   onSelect,
   providers,
 }: {
-  buttonType: 'primary' | 'tertiary';
   onSelect: (hint: string) => void;
   providers: Promise<string[]>;
 }): ReactElement => {
@@ -84,7 +82,7 @@ const ProviderButtons = ({
             onClick: () => onSelect(hint),
             size: 'large',
             text: signInProviderLabel(hint),
-            type: buttonType,
+            type: 'tertiary',
           }}
         />
       ))}
@@ -93,11 +91,9 @@ const ProviderButtons = ({
 };
 
 export const SignInMethods = ({
-  buttonType = 'tertiary',
   issuer,
   onSelect,
 }: {
-  buttonType?: 'primary' | 'tertiary' | undefined;
   issuer: string;
   onSelect: (hint: string) => void;
 }): ReactElement => (
@@ -108,6 +104,6 @@ export const SignInMethods = ({
       </div>
     }
   >
-    <ProviderButtons buttonType={buttonType} onSelect={onSelect} providers={signetProviders(issuer)} />
+    <ProviderButtons onSelect={onSelect} providers={signetProviders(issuer)} />
   </Suspense>
 );

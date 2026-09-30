@@ -16,14 +16,14 @@ const sizeMap = {
 };
 
 export const typeMap = {
-  /** Brand call-to-action. The orange gradient is the primary button. */
+  /** Brand call-to-action. Each product sets this colour in its theme. */
   primary: 'hover:brightness-110 bg-primary-main text-black/85 font-open',
   /** Filled grey. Not the brand gradient. */
   accent: 'hover:brightness-125 bg-grey-200 text-black/85 font-open',
   /** Figma modal Cancel — orange text, no fill. */
   ghost: 'hover:brightness-125 text-orange-100 font-open',
-  secondary: 'hover:brightness-125 border border-grey-700t',
-  tertiary: 'hover:brightness-200 bg-grey-900t text-white',
+  secondary: 'hover:brightness-125 border border-grey-700t font-open',
+  tertiary: 'hover:brightness-200 bg-grey-900t text-white font-open',
 
   icon: 'active:bg-grey-200 active:text-black/85 rounded-full transition-all flex items-center justify-center p-3.5 [disabled]:opacity-50 [disabled]:cursor-not-allowed outline-none',
   menu: 'inline-flex justify-center after:transition-all after:w-0 hover:after:w-4/5 after:h-px after:absolute after:-bottom-1.5 after:bg-orange-100 relative outline-none',
