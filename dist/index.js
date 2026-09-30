@@ -1623,16 +1623,24 @@ var SignInMethods = ({
 
 // src/components/LegalNotice.tsx
 import { jsx as jsx17, jsxs as jsxs14 } from "react/jsx-runtime";
-var links = [
-  { href: "https://aduro.io/privacy", label: "Privacy Policy" },
-  { href: "https://aduro.io/terms", label: "Terms and Conditions" }
-];
+var defaultLinks = {
+  privacyUrl: "https://aduro.io/privacy",
+  termsUrl: "https://aduro.io/terms"
+};
 var separator = (index, count) => {
   if (index === 0) return "";
   if (index === count - 1) return " and ";
   return ", ";
 };
-var LegalNotice = ({ productName }) => {
+var LegalNotice = ({
+  productName,
+  privacyUrl = defaultLinks.privacyUrl,
+  termsUrl = defaultLinks.termsUrl
+}) => {
+  const links = [
+    { href: privacyUrl, label: "Privacy Policy" },
+    { href: termsUrl, label: "Terms and Conditions" }
+  ];
   const names = links.map((link, index) => /* @__PURE__ */ jsxs14("span", { children: [
     separator(index, links.length),
     /* @__PURE__ */ jsx17(
@@ -1667,14 +1675,16 @@ var SignInScreen = ({
   issuer,
   onSelect,
   onSubmitEmail,
+  privacyUrl,
   productName,
   showLegalNotice = true,
-  submitting = false
+  submitting = false,
+  termsUrl
 }) => {
   const [emailStep, setEmailStep] = useState3(false);
   const frameFooter = /* @__PURE__ */ jsxs15(Fragment4, { children: [
     footer,
-    showLegalNotice ? /* @__PURE__ */ jsx18(LegalNotice, { productName }) : null
+    showLegalNotice ? /* @__PURE__ */ jsx18(LegalNotice, { productName, privacyUrl, termsUrl }) : null
   ] });
   const form = useForm({
     defaultValues: { email: "", password: "" },

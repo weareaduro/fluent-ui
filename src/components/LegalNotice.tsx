@@ -1,9 +1,9 @@
 import type { ReactElement, ReactNode } from 'react';
 
-const links = [
-  { href: 'https://aduro.io/privacy', label: 'Privacy Policy' },
-  { href: 'https://aduro.io/terms', label: 'Terms and Conditions' },
-];
+const defaultLinks = {
+  privacyUrl: 'https://aduro.io/privacy',
+  termsUrl: 'https://aduro.io/terms',
+};
 
 const separator = (index: number, count: number): string => {
   if (index === 0) return '';
@@ -13,7 +13,19 @@ const separator = (index: number, count: number): string => {
   return ', ';
 };
 
-export const LegalNotice = ({ productName }: { productName: string }): ReactElement => {
+export const LegalNotice = ({
+  productName,
+  privacyUrl = defaultLinks.privacyUrl,
+  termsUrl = defaultLinks.termsUrl,
+}: {
+  productName: string;
+  privacyUrl?: string | undefined;
+  termsUrl?: string | undefined;
+}): ReactElement => {
+  const links = [
+    { href: privacyUrl, label: 'Privacy Policy' },
+    { href: termsUrl, label: 'Terms and Conditions' },
+  ];
   const names: ReactNode[] = links.map((link, index) => (
     <span key={link.href}>
       {separator(index, links.length)}

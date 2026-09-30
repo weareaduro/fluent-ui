@@ -14,9 +14,11 @@ export const SignInScreen = ({
   issuer,
   onSelect,
   onSubmitEmail,
+  privacyUrl,
   productName,
   showLegalNotice = true,
   submitting = false,
+  termsUrl,
 }: {
   emphasizeProduct?: boolean | undefined;
   error?: string | undefined;
@@ -24,15 +26,19 @@ export const SignInScreen = ({
   issuer: string;
   onSelect: (hint: string) => void;
   onSubmitEmail: (value: { email: string; password: string }) => Promise<void> | void;
+  privacyUrl?: string | undefined;
   productName: string;
   showLegalNotice?: boolean | undefined;
   submitting?: boolean | undefined;
+  termsUrl?: string | undefined;
 }): ReactElement => {
   const [emailStep, setEmailStep] = useState(false);
   const frameFooter = (
     <>
       {footer}
-      {showLegalNotice ? <LegalNotice productName={productName} /> : null}
+      {showLegalNotice ? (
+        <LegalNotice productName={productName} privacyUrl={privacyUrl} termsUrl={termsUrl} />
+      ) : null}
     </>
   );
   const form = useForm({
