@@ -8,8 +8,8 @@ import { Link } from '@tanstack/react-router';
 import { useState, type ReactElement, type ReactNode } from 'react';
 import { ProductLockup } from './ProductLockup';
 
-const AduroMark = (): ReactElement => (
-  <svg width="33" height="29" viewBox="0 0 33 29" fill="none" aria-hidden="true" className="h-5 w-auto">
+const AduroMark = ({ className = 'h-5 w-auto' }: { className?: string }): ReactElement => (
+  <svg width="33" height="29" viewBox="0 0 33 29" fill="none" aria-hidden="true" className={className}>
     <path d="M8.40666 22.4259L15.6041 9.9563C15.6488 9.87583 15.6756 9.78642 15.6756 9.69403V1.27764C15.6756 0.74118 14.9633 0.55044 14.6951 1.01537L0.0737181 26.3391C-0.19749 26.807 0.333005 27.3315 0.797933 27.0513L8.22188 22.6107C8.29937 22.566 8.36196 22.5004 8.40666 22.4229V22.4259Z" fill="white" />
     <path d="M16.8225 9.96206L24.0647 22.5062C24.1094 22.5837 24.1749 22.6492 24.2524 22.6969L31.6346 27.0601C32.0996 27.3343 32.6271 26.8127 32.3559 26.3448L17.7315 1.01219C17.4633 0.547267 16.751 0.738006 16.751 1.27446V9.69682C16.751 9.7892 16.7748 9.87861 16.8225 9.95908V9.96206Z" fill="white" />
     <path d="M23.3771 23.5137H8.95834C8.86297 23.5137 8.77058 23.5405 8.69011 23.5882L1.68937 27.7755C1.2304 28.0497 1.4271 28.7531 1.96057 28.7531H30.4613C30.9947 28.7531 31.1885 28.0467 30.7295 27.7755L23.6483 23.5882C23.5678 23.5405 23.4754 23.5137 23.3801 23.5137H23.3771Z" fill="white" />
@@ -43,6 +43,51 @@ const SidebarPanelIcon = ({ className = '' }: { className?: string }): ReactElem
 export type AppOrganisation = {
   label: string;
   value: string;
+  website?: string;
+};
+
+const organisationFaviconUrl = (website: string | undefined): string | null => {
+  const trimmed = website?.trim();
+
+  if (!trimmed) return null;
+
+  try {
+    const hostname = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`).hostname;
+
+    if (hostname === '') return null;
+
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
+  } catch {
+    return null;
+  }
+};
+
+const OrganisationAvatar = ({
+  label,
+  website,
+}: {
+  label: string;
+  website?: string;
+}): ReactElement => {
+  const src = organisationFaviconUrl(website);
+  const [failed, setFailed] = useState(false);
+
+  if (src && !failed) {
+    return (
+      <img
+        src={src}
+        alt=""
+        className="size-7 shrink-0 rounded-full border border-line object-cover"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
+      {initials(label)}
+    </span>
+  );
 };
 
 const linkClassName =
@@ -159,9 +204,7 @@ const OrganisationMenu = ({
         aria-label="Switch organisation"
         className="flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10"
       >
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-[2px] bg-white/10 text-xs font-bold text-white">
-          {initials(label)}
-        </span>
+        <OrganisationAvatar label={label} {...(current?.website ? { website: current.website } : {})} />
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{label}</span>
         <ChevronDownIcon className="size-4 shrink-0 text-subtle" />
       </MenuButton>
@@ -177,7 +220,8 @@ const OrganisationMenu = ({
               onClick={() => onChange(option.value)}
               className={menuItemClassName}
             >
-              {option.label}
+              <OrganisationAvatar label={option.label} {...(option.website ? { website: option.website } : {})} />
+              <span className="min-w-0 flex-1 truncate">{option.label}</span>
             </button>
           </MenuItem>
         ))}
@@ -230,8 +274,25 @@ export const AppFrame = ({
             aria-label={`${productName} by Aduro`}
             className="inline-flex flex-col items-center gap-1.5"
           >
-            {logoSrc ? <img src={logoSrc} alt="" className="h-5 w-auto" /> : <AduroMark />}
-            {collapsed ? null : <ProductLockup productName={productName} />}
+            {logoSrc ? (
+              <img src={logoSrc} alt="" className="h-5 w-auto" />
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <AduroMark />
+                {collapsed ? null : (
+                  <span className="font-grotesque text-[22px] font-semibold leading-none tracking-tight text-white">
+                    {productName}
+                  </span>
+                )}
+              </span>
+            )}
+            {collapsed ? null : logoSrc ? (
+              <ProductLockup productName={productName} />
+            ) : (
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-subtle/50">
+                by Aduro
+              </span>
+            )}
           </Link>
         </div>
         {organisations && organisations.options.length > 0 && !collapsed ? (

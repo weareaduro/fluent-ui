@@ -67,7 +67,6 @@ export function Modal({
             <IconButton
               onClick={onClose}
               Icon={XMarkIcon}
-              tooltip="Close"
               aria-label="Close modal"
               type="subtle"
             />
