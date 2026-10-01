@@ -90,7 +90,7 @@ var typeMap = {
   accent: "hover:brightness-125 bg-grey-200 text-black/85 font-open",
   /** Figma modal Cancel — orange text, no fill. */
   ghost: "hover:brightness-125 text-orange-100 font-open",
-  secondary: "hover:brightness-125 border border-grey-700t font-open",
+  secondary: "hover:brightness-125 border border-grey-700t text-low-priority font-open",
   tertiary: "hover:brightness-200 bg-grey-900t text-white font-open",
   icon: "active:bg-grey-200 active:text-black/85 rounded-full transition-all flex items-center justify-center p-3.5 [disabled]:opacity-50 [disabled]:cursor-not-allowed outline-none",
   menu: "inline-flex justify-center after:transition-all after:w-0 hover:after:w-4/5 after:h-px after:absolute after:-bottom-1.5 after:bg-orange-100 relative outline-none",
