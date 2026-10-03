@@ -96,7 +96,6 @@ export const TransactionsList = ({
 }): ReactElement => {
   const [query, setQuery] = useState('');
   const [client, setClient] = useState('');
-  const [repository, setRepository] = useState('');
   const [type, setType] = useState('');
   const [period, setPeriod] = useState<Period>('month');
   const [page, setPage] = useState(1);
@@ -111,8 +110,6 @@ export const TransactionsList = ({
   }
 
   if (query.trim() !== '') params.set('query', query.trim());
-
-  if (repository !== '') params.set('repository', repository);
 
   if (type !== '') params.set('type', type);
 
@@ -245,16 +242,6 @@ export const TransactionsList = ({
               setPeriod(value as Period);
             }}
             options={periodOptions}
-          />
-          <Select
-            placeholder="All repos"
-            widthClass="w-52"
-            value={repository}
-            onChange={(value) => {
-              setPage(1);
-              setRepository(value);
-            }}
-            options={[{ value: '', label: 'All repos' }, ...result.data.repositories.map((name) => ({ value: name, label: name }))]}
           />
           <Select
             placeholder="All types"

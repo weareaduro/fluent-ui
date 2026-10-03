@@ -111,29 +111,31 @@ export const XeroInvoicesList = ({
             setQuery(event.target.value);
           }}
         />
-        {showClient ? (
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+          {showClient ? (
+            <Select
+              placeholder="All clients"
+              widthClass="w-44"
+              value={client ?? ''}
+              onChange={(value) => onClientChange?.(value)}
+              options={[{ value: '', label: 'All clients' }, ...clients.map((id) => ({ value: id, label: id }))]}
+            />
+          ) : null}
           <Select
-            placeholder="All clients"
-            widthClass="w-44"
-            value={client ?? ''}
-            onChange={(value) => onClientChange?.(value)}
-            options={[{ value: '', label: 'All clients' }, ...clients.map((id) => ({ value: id, label: id }))]}
+            placeholder="All sources"
+            widthClass="w-40"
+            value={provider}
+            onChange={(value) => {
+              setPage(1);
+              setProvider(value);
+            }}
+            options={[
+              { value: '', label: 'All sources' },
+              { value: 'xero', label: 'Xero' },
+              { value: 'stripe', label: 'Stripe' },
+            ]}
           />
-        ) : null}
-        <Select
-          placeholder="All sources"
-          widthClass="w-40"
-          value={provider}
-          onChange={(value) => {
-            setPage(1);
-            setProvider(value);
-          }}
-          options={[
-            { value: '', label: 'All sources' },
-            { value: 'xero', label: 'Xero' },
-            { value: 'stripe', label: 'Stripe' },
-          ]}
-        />
+        </div>
       </div>
       <TableColumns
         widthType="pc"
