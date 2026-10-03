@@ -6,7 +6,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link } from '@tanstack/react-router';
 import { useState, type ReactElement, type ReactNode } from 'react';
-import { displayRole, managesOrganisations, type NavItem, signetAdministrationItems, signetPlatformItems } from '../signet/claims';
+import { displayRole, managesOrganisations, type NavItem, signetAdministrationItems, signetPlatformItems, signetTenantAdministrationItems } from '../signet/claims';
 import { useDirectory, useFluentConfig } from '../signet/provider';
 import { AduroEmblem } from './AduroEmblem';
 import { OrganisationAvatar } from './OrganisationAvatar';
@@ -45,6 +45,7 @@ export const SideNav = ({
   homeTo = '/',
   menuItems,
   preMenu,
+  preSwitcherNode,
 }: {
   administrationMenuItems?: NavItem[];
   children: ReactNode;
@@ -53,6 +54,8 @@ export const SideNav = ({
   homeTo?: string;
   menuItems: NavItem[];
   preMenu?: ReactNode | ((collapsed: boolean) => ReactNode);
+  /** Rendered above the organisation switcher. Signet uses this for tenants. */
+  preSwitcherNode?: ReactNode | ((collapsed: boolean) => ReactNode);
 }): ReactElement => {
   const config = useFluentConfig();
   const { onLogout } = config;
@@ -62,7 +65,15 @@ export const SideNav = ({
     clientId: resolvedClientId,
     membershipClaims: currentOrganisation?.claims ?? [],
   }).filter((item) => !administrationMenuItems.some((existing) => existing.to === item.to));
-  const administrationItems = [...administrationMenuItems, ...organisationItems];
+  const administrationItems = [
+    ...administrationMenuItems,
+    ...organisationItems,
+    ...signetTenantAdministrationItems({
+      claims: user.claims,
+      clientId: resolvedClientId,
+      organisationSelected: organisationUuid !== '',
+    }),
+  ];
   const platformItems = signetPlatformItems({
     claims: user.claims,
     clientId: resolvedClientId,
@@ -80,6 +91,7 @@ export const SideNav = ({
   ]);
   const showSwitcher = organisations.length > 0 || canClearOrganisation;
   const preMenuNode = typeof preMenu === 'function' ? preMenu(collapsed) : preMenu;
+  const preSwitcher = typeof preSwitcherNode === 'function' ? preSwitcherNode(collapsed) : preSwitcherNode;
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-primary text-white">
@@ -92,6 +104,7 @@ export const SideNav = ({
             <AduroEmblem className="h-7 w-auto" />
           </Link>
         </div>
+        {preSwitcher ? <div className="shrink-0 px-3 pb-2">{preSwitcher}</div> : null}
         {showSwitcher && !collapsed ? (
           <div className="px-3 pb-3">
             <Menu>

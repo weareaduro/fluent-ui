@@ -79,6 +79,10 @@ export { AppHeader, type AppHeaderButton, type AppHeaderCrumb } from './componen
 
 export { SideNav } from './components/SideNav';
 
+export { TenantPage } from './components/TenantPage';
+
+export { TenantSwitcher } from './components/TenantSwitcher';
+
 export { SubNav, type SubNavItem } from './components/SubNav';
 
 export { SummaryCard } from './components/SummaryCard';
@@ -102,7 +106,7 @@ export {
   type PortalNotification,
 } from './components/Notifications';
 
-export { FluentProvider, useDirectory, useFluentConfig, useSignetMutation, type DirectoryOrganisation, type DirectoryUser } from './signet/provider';
+export { FluentProvider, useDirectory, useFluentConfig, useSignetMutation, useSignetQuery, type DirectoryOrganisation, type DirectoryUser } from './signet/provider';
 
 export { useTeam, type TeamMember } from './signet/useTeam';
 

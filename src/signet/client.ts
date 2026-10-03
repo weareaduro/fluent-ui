@@ -4,6 +4,18 @@ export class SignetError extends Error {
   }
 }
 
+const tenantHeader = (): string | undefined => {
+  if (typeof document === 'undefined') return undefined;
+
+  const prefix = 'signet-current-tenant=';
+  const match = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix));
+
+  return match ? decodeURIComponent(match.slice(prefix.length)) : undefined;
+};
+
 export const signetJson = async <T>(
   endpoint: string,
   token: string,
@@ -14,6 +26,10 @@ export const signetJson = async <T>(
 
   headers.set('accept', 'application/json');
   headers.set('authorization', `Bearer ${token}`);
+
+  const tenantId = tenantHeader();
+
+  if (tenantId && !headers.has('x-signet-tenant')) headers.set('x-signet-tenant', tenantId);
 
   if (init?.body != null && !headers.has('content-type')) {
     headers.set('content-type', 'application/json');

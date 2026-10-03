@@ -1,4 +1,4 @@
-import { BuildingOffice2Icon, CreditCardIcon, KeyIcon, ShieldCheckIcon, TicketIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { BuildingOffice2Icon, CreditCardIcon, KeyIcon, PuzzlePieceIcon, ShieldCheckIcon, TicketIcon, UsersIcon } from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
 
 export const MANAGE_CLAIM = 'signet.manage';
@@ -56,6 +56,24 @@ export const signetAdministrationItems = ({
   ];
 };
 
+/** Billing and Tenant, shown under Administration when no organisation is selected. */
+export const signetTenantAdministrationItems = ({
+  claims,
+  clientId = 'signet',
+  organisationSelected,
+}: {
+  claims: readonly string[];
+  clientId?: string;
+  organisationSelected: boolean;
+}): NavItem[] => {
+  if (clientId !== 'signet' || organisationSelected || !claims.includes('signet.system.billing')) return [];
+
+  return [
+    { icon: <CreditCardIcon className="size-5 shrink-0" />, label: 'Billing', to: '/billing' },
+    { icon: <BuildingOffice2Icon className="size-5 shrink-0" />, label: 'Tenant', to: '/tenant' },
+  ];
+};
+
 /** Platform catalogue. Shown in the Signet sidenav when no organisation is selected. */
 export const signetPlatformItems = ({
   claims,
@@ -80,6 +98,7 @@ export const signetPlatformItems = ({
       },
       { claim: 'signet.manage-claims', icon: <TicketIcon className="size-5 shrink-0" />, label: 'Claims', to: '/claims' },
       { claim: 'signet.manage-clients', icon: <KeyIcon className="size-5 shrink-0" />, label: 'Clients', to: '/clients' },
+      { claim: 'signet.system.integrations', icon: <PuzzlePieceIcon className="size-5 shrink-0" />, label: 'Integrations', to: '/integrations' },
     ] as const
   )
     .filter((item) => claims.includes(item.claim))

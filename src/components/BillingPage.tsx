@@ -270,18 +270,21 @@ const AddCardModal = ({
 
 export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: ComponentType }): ReactElement => {
   const { clientId } = useFluentConfig();
-  const { currentOrganisation, organisationUuid } = useDirectory();
+  const { currentOrganisation, organisationUuid, user } = useDirectory();
   const mutate = useSignetMutation();
   const queryClient = useQueryClient();
   const hasBalance = BalanceComponent !== undefined;
   const [section, setSection] = useState<Section>(() => readSection(hasBalance));
   const [addingCard, setAddingCard] = useState(false);
-  const canBill = currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false;
+  const tenantBilling = organisationUuid === '' && clientId === 'signet' && user.claims.includes('signet.system.billing');
+  const canBill = tenantBilling || (currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false);
   const canFilterClients =
     clientId === 'signet' && (currentOrganisation?.claims.includes('signet.organisation.billing.clients') ?? false);
   const [invoiceClient, setInvoiceClient] = useState('');
-  const ready = organisationUuid !== '' && canBill;
-  const invoicePath = `/api/resources/organisations/${organisationUuid}/invoices${
+  const ready = canBill && (tenantBilling || organisationUuid !== '');
+  const invoicePath = tenantBilling
+    ? '/api/resources/tenants/current/invoices'
+    : `/api/resources/organisations/${organisationUuid}/invoices${
     canFilterClients
       ? invoiceClient === ''
         ? ''
@@ -295,7 +298,7 @@ export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: Component
   );
   const methods = useSignetQuery<PaymentMethodsResponse>(
     ['billing-payment-methods', organisationUuid],
-    `/api/resources/organisations/${organisationUuid}/payment-methods`,
+    tenantBilling ? '/api/resources/tenants/current/payment-methods' : `/api/resources/organisations/${organisationUuid}/payment-methods`,
     ready,
   );
 
@@ -330,16 +333,18 @@ export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: Component
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <PageHeader
         title="Billing"
-        {...(payments && ready ? { button: { icon: PlusIcon, label: 'Add card', onClick: () => setAddingCard(true) } } : {})}
+        {...(payments && ready && !tenantBilling ? { button: { icon: PlusIcon, label: 'Add card', onClick: () => setAddingCard(true) } } : {})}
       />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside aria-label="Billing sections" className="flex w-52 shrink-0 flex-col gap-0.5 self-stretch border-r border-grey-700t px-3 py-4">
           <button type="button" className={sideNavItemClassName(section === 'invoices')} onClick={() => choose('invoices')}>
             Invoices
           </button>
-          <button type="button" className={sideNavItemClassName(transactions)} onClick={() => choose('transactions')}>
-            Transactions
-          </button>
+          {tenantBilling ? null : (
+            <button type="button" className={sideNavItemClassName(transactions)} onClick={() => choose('transactions')}>
+              Transactions
+            </button>
+          )}
           {BalanceComponent ? (
             <button type="button" className={sideNavItemClassName(section === 'balance')} onClick={() => choose('balance')}>
               Balance
@@ -350,7 +355,7 @@ export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: Component
           </button>
         </aside>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {organisationUuid === '' ? note('Select an organisation to view billing.') : null}
+          {organisationUuid === '' && !tenantBilling ? note('Select an organisation to view billing.') : null}
           {organisationUuid !== '' && !canBill ? note('You do not have access to billing.') : null}
           {ready && section === 'invoices' ? (
             <InvoicesPanel

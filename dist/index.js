@@ -5047,7 +5047,7 @@ var NotificationsMenu = () => {
 };
 
 // src/signet/claims.tsx
-import { BuildingOffice2Icon, CreditCardIcon, KeyIcon, ShieldCheckIcon, TicketIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { BuildingOffice2Icon, CreditCardIcon, KeyIcon, PuzzlePieceIcon, ShieldCheckIcon, TicketIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { jsx as jsx16 } from "react/jsx-runtime";
 var MANAGE_CLAIM = "signet.manage";
 var MANAGE_ORGANISATIONS_CLAIM = "signet.manage-organisations";
@@ -5077,6 +5077,17 @@ var signetAdministrationItems = ({
     ] : []
   ];
 };
+var signetTenantAdministrationItems = ({
+  claims,
+  clientId = "signet",
+  organisationSelected
+}) => {
+  if (clientId !== "signet" || organisationSelected || !claims.includes("signet.system.billing")) return [];
+  return [
+    { icon: /* @__PURE__ */ jsx16(CreditCardIcon, { className: "size-5 shrink-0" }), label: "Billing", to: "/billing" },
+    { icon: /* @__PURE__ */ jsx16(BuildingOffice2Icon, { className: "size-5 shrink-0" }), label: "Tenant", to: "/tenant" }
+  ];
+};
 var signetPlatformItems = ({
   claims,
   clientId = "signet",
@@ -5093,7 +5104,8 @@ var signetPlatformItems = ({
       to: "/organisations"
     },
     { claim: "signet.manage-claims", icon: /* @__PURE__ */ jsx16(TicketIcon, { className: "size-5 shrink-0" }), label: "Claims", to: "/claims" },
-    { claim: "signet.manage-clients", icon: /* @__PURE__ */ jsx16(KeyIcon, { className: "size-5 shrink-0" }), label: "Clients", to: "/clients" }
+    { claim: "signet.manage-clients", icon: /* @__PURE__ */ jsx16(KeyIcon, { className: "size-5 shrink-0" }), label: "Clients", to: "/clients" },
+    { claim: "signet.system.integrations", icon: /* @__PURE__ */ jsx16(PuzzlePieceIcon, { className: "size-5 shrink-0" }), label: "Integrations", to: "/integrations" }
   ].filter((item) => claims.includes(item.claim)).map(({ icon, label, to }) => ({ icon, label, to }));
 };
 var roleLabel = (role) => {
@@ -5112,10 +5124,18 @@ var SignetError = class extends Error {
   }
   status;
 };
+var tenantHeader = () => {
+  if (typeof document === "undefined") return void 0;
+  const prefix = "signet-current-tenant=";
+  const match = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix));
+  return match ? decodeURIComponent(match.slice(prefix.length)) : void 0;
+};
 var signetJson = async (endpoint, token, path, init) => {
   const headers2 = new Headers(init?.headers);
   headers2.set("accept", "application/json");
   headers2.set("authorization", `Bearer ${token}`);
+  const tenantId = tenantHeader();
+  if (tenantId && !headers2.has("x-signet-tenant")) headers2.set("x-signet-tenant", tenantId);
   if (init?.body != null && !headers2.has("content-type")) {
     headers2.set("content-type", "application/json");
   }
@@ -6779,7 +6799,8 @@ var SideNav = ({
   clientId,
   homeTo = "/",
   menuItems,
-  preMenu
+  preMenu,
+  preSwitcherNode
 }) => {
   const config = useFluentConfig();
   const { onLogout } = config;
@@ -6789,7 +6810,15 @@ var SideNav = ({
     clientId: resolvedClientId,
     membershipClaims: currentOrganisation?.claims ?? []
   }).filter((item) => !administrationMenuItems.some((existing) => existing.to === item.to));
-  const administrationItems = [...administrationMenuItems, ...organisationItems];
+  const administrationItems = [
+    ...administrationMenuItems,
+    ...organisationItems,
+    ...signetTenantAdministrationItems({
+      claims: user.claims,
+      clientId: resolvedClientId,
+      organisationSelected: organisationUuid !== ""
+    })
+  ];
   const platformItems = signetPlatformItems({
     claims: user.claims,
     clientId: resolvedClientId,
@@ -6807,6 +6836,7 @@ var SideNav = ({
   ]);
   const showSwitcher = organisations.length > 0 || canClearOrganisation;
   const preMenuNode = typeof preMenu === "function" ? preMenu(collapsed) : preMenu;
+  const preSwitcher = typeof preSwitcherNode === "function" ? preSwitcherNode(collapsed) : preSwitcherNode;
   return /* @__PURE__ */ jsxs28("div", { className: "flex h-screen w-full overflow-hidden bg-primary text-white", children: [
     /* @__PURE__ */ jsxs28(
       "aside",
@@ -6815,6 +6845,7 @@ var SideNav = ({
         className: "flex h-full shrink-0 flex-col border-r border-line bg-primary transition-all duration-150 data-[collapsed=false]:w-60 data-[collapsed=true]:w-[65px]",
         children: [
           /* @__PURE__ */ jsx37("div", { className: "mb-1 flex shrink-0 flex-col items-center justify-center px-4 data-[collapsed=false]:pb-3 data-[collapsed=false]:pt-4 data-[collapsed=true]:h-14", "data-collapsed": collapsed, children: /* @__PURE__ */ jsx37(Link4, { to: homeTo, "aria-label": "Home", className: "inline-flex items-center", children: /* @__PURE__ */ jsx37(AduroEmblem, { className: "h-7 w-auto" }) }) }),
+          preSwitcher ? /* @__PURE__ */ jsx37("div", { className: "shrink-0 px-3 pb-2", children: preSwitcher }) : null,
           showSwitcher && !collapsed ? /* @__PURE__ */ jsx37("div", { className: "px-3 pb-3", children: /* @__PURE__ */ jsxs28(Menu4, { children: [
             /* @__PURE__ */ jsxs28(MenuButton4, { "aria-label": "Switch organisation", className: "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10", children: [
               /* @__PURE__ */ jsx37(OrganisationAvatar, { name: currentOrganisation?.name ?? "No organisation", ...currentOrganisation?.website ? { website: currentOrganisation.website } : {} }),
@@ -6877,60 +6908,7 @@ var SideNav = ({
   ] });
 };
 
-// src/components/SubNav.tsx
-import { Link as Link5 } from "@tanstack/react-router";
-import { jsx as jsx38, jsxs as jsxs29 } from "react/jsx-runtime";
-var tabActive = "flex items-center border-b-2 border-orange-100 px-3 text-sm font-semibold text-orange-100 transition";
-var tabInactive = "flex items-center border-b-2 border-transparent px-3 text-sm font-semibold text-subtle transition hover:text-white";
-var itemId = (item) => item.id ?? item.to ?? item.label;
-function SubNav({
-  items,
-  onChange,
-  value
-}) {
-  return /* @__PURE__ */ jsxs29("div", { className: "shrink-0", children: [
-    /* @__PURE__ */ jsx38("div", { className: "flex h-12 items-stretch gap-1 overflow-x-auto px-5", children: items.map((item) => {
-      const id = itemId(item);
-      if (item.to && !onChange) {
-        return /* @__PURE__ */ jsx38(
-          Link5,
-          {
-            to: item.to,
-            activeProps: { className: tabActive },
-            inactiveProps: { className: tabInactive },
-            children: item.label
-          },
-          id
-        );
-      }
-      const active = value === id;
-      return /* @__PURE__ */ jsx38("button", { type: "button", className: active ? tabActive : tabInactive, onClick: () => onChange?.(id), children: item.label }, id);
-    }) }),
-    /* @__PURE__ */ jsx38("div", { className: "-mt-px border-b border-grey-700t", "aria-hidden": "true" })
-  ] });
-}
-
-// src/components/SummaryCard.tsx
-import { jsx as jsx39, jsxs as jsxs30 } from "react/jsx-runtime";
-function SummaryCard({
-  actions,
-  children,
-  status,
-  title
-}) {
-  return /* @__PURE__ */ jsxs30("div", { className: "rounded-[2px] border border-grey-700t bg-secondary p-5", children: [
-    /* @__PURE__ */ jsxs30("div", { className: "flex items-start justify-between gap-4", children: [
-      /* @__PURE__ */ jsxs30("div", { className: "flex min-w-0 flex-wrap items-center gap-3", children: [
-        /* @__PURE__ */ jsx39("h2", { className: "truncate font-grotesque text-[30px] font-semibold leading-9 text-white", children: title }),
-        status ? /* @__PURE__ */ jsx39("span", { className: "rounded-full bg-white/10 px-2.5 py-1 text-sm font-semibold capitalize text-subtle", children: status }) : null
-      ] }),
-      actions
-    ] }),
-    children
-  ] });
-}
-
-// src/components/OrganisationPage.tsx
+// src/components/TenantPage.tsx
 import { Menu as Menu5, MenuButton as MenuButton5, MenuItem as MenuItem5, MenuItems as MenuItems5 } from "@headlessui/react";
 import {
   ArrowTopRightOnSquareIcon as ArrowTopRightOnSquareIcon2,
@@ -6942,8 +6920,8 @@ import {
   MapPinIcon,
   UserCircleIcon
 } from "@heroicons/react/24/outline";
-import { Children, useState as useState14 } from "react";
-import { jsx as jsx40, jsxs as jsxs31 } from "react/jsx-runtime";
+import { useState as useState14 } from "react";
+import { jsx as jsx38, jsxs as jsxs29 } from "react/jsx-runtime";
 var blank = {
   billingAddressLine1: "",
   billingAddressLine2: "",
@@ -6981,15 +6959,397 @@ var emptyToNull = (value) => {
   return trimmed === "" ? null : trimmed;
 };
 var menuItemClassName4 = "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white";
+var readTenant = () => {
+  const prefix = "signet-current-tenant=";
+  const match = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix));
+  return match ? decodeURIComponent(match.slice(prefix.length)) : "";
+};
 var OrgField = ({
   Icon,
   label,
   value
-}) => /* @__PURE__ */ jsxs31("div", { children: [
-  /* @__PURE__ */ jsx40("dt", { className: "text-xs leading-[18px] text-low-priority", children: label }),
-  /* @__PURE__ */ jsxs31("dd", { className: "mt-2 flex min-w-0 items-center gap-2 text-sm text-white", children: [
-    /* @__PURE__ */ jsx40(Icon, { className: "size-4 shrink-0 text-low-priority", "aria-hidden": "true" }),
-    /* @__PURE__ */ jsx40("span", { className: "min-w-0", children: value })
+}) => /* @__PURE__ */ jsxs29("div", { children: [
+  /* @__PURE__ */ jsx38("dt", { className: "text-xs leading-[18px] text-low-priority", children: label }),
+  /* @__PURE__ */ jsxs29("dd", { className: "mt-2 flex min-w-0 items-center gap-2 text-sm text-white", children: [
+    /* @__PURE__ */ jsx38(Icon, { className: "size-4 shrink-0 text-low-priority", "aria-hidden": "true" }),
+    /* @__PURE__ */ jsx38("span", { className: "min-w-0", children: value })
+  ] })
+] });
+var TenantPage = () => {
+  const tenants = useSignetQuery(["tenants"], "/api/resources/tenants", true);
+  const currentId = readTenant();
+  const record = tenants.data?.items.find((item) => item.uuid === currentId) ?? tenants.data?.items[0];
+  const canManage = record?.role === "super-admin";
+  const mutate = useSignetMutation();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState14(false);
+  const [form, setForm] = useState14(blank);
+  const [saving, setSaving] = useState14(false);
+  const openEdit = () => {
+    if (!record) return;
+    setForm({
+      billingAddressLine1: record.billingAddressLine1 ?? "",
+      billingAddressLine2: record.billingAddressLine2 ?? "",
+      billingCity: record.billingCity ?? "",
+      billingContactFirstName: record.billingContactFirstName ?? "",
+      billingContactLastName: record.billingContactLastName ?? "",
+      billingCountry: countryValue(record.billingCountry),
+      billingCounty: record.billingCounty ?? "",
+      billingEmail: record.billingEmail ?? "",
+      billingPostcode: record.billingPostcode ?? "",
+      name: record.name,
+      registeredCompanyName: record.registeredCompanyName ?? "",
+      registeredCompanyNumber: record.registeredCompanyNumber ?? "",
+      taxId: record.taxId ?? "",
+      website: record.website ?? ""
+    });
+    setEditing(true);
+  };
+  const address = record ? [record.billingAddressLine1, record.billingAddressLine2, record.billingCity, record.billingCounty, record.billingPostcode, countryName(record.billingCountry)].map((part) => part?.trim()).filter((part) => part).join(", ") : "";
+  const contact = record ? [record.billingContactFirstName, record.billingContactLastName].filter(Boolean).join(" ") : "";
+  if (tenants.isPending) return /* @__PURE__ */ jsx38(FullLoader, {});
+  if (!canManage) {
+    return /* @__PURE__ */ jsx38("p", { className: "p-6 text-sm text-subtle", children: "You do not have access to this tenant." });
+  }
+  const website = record?.website?.trim() ?? "";
+  const websiteHref = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+  return /* @__PURE__ */ jsxs29("section", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto", children: [
+    /* @__PURE__ */ jsx38(PageHeader, { title: "Tenant" }),
+    record ? /* @__PURE__ */ jsxs29("div", { className: "border-b border-grey-700t px-5 py-5", children: [
+      /* @__PURE__ */ jsxs29("div", { className: "flex items-start justify-between gap-4", children: [
+        /* @__PURE__ */ jsx38("h2", { className: "min-w-0 truncate font-grotesque text-[30px] font-semibold leading-9 text-white", children: record.name }),
+        /* @__PURE__ */ jsxs29(Menu5, { children: [
+          /* @__PURE__ */ jsx38(MenuButton5, { "aria-label": "Tenant actions", className: "rounded-[2px] p-2 text-subtle outline-none transition hover:bg-white/5 hover:text-white", children: /* @__PURE__ */ jsx38(EllipsisVerticalIcon2, { className: "size-5" }) }),
+          /* @__PURE__ */ jsx38(MenuItems5, { portal: true, anchor: { to: "bottom end", gap: 6 }, className: "z-50 min-w-44 rounded-[2px] border border-line bg-secondary text-white shadow-xl outline-hidden", children: /* @__PURE__ */ jsx38("div", { className: "p-1.5", children: /* @__PURE__ */ jsx38(MenuItem5, { children: /* @__PURE__ */ jsx38("button", { type: "button", className: menuItemClassName4, onClick: openEdit, children: "Edit tenant" }) }) }) })
+        ] })
+      ] }),
+      website !== "" || address !== "" ? /* @__PURE__ */ jsxs29("div", { className: "mt-4 flex flex-col gap-2 text-sm text-subtle", children: [
+        website !== "" ? /* @__PURE__ */ jsxs29("a", { className: "inline-flex w-fit max-w-full items-center gap-2 transition hover:text-white", href: websiteHref, rel: "noopener noreferrer", target: "_blank", children: [
+          /* @__PURE__ */ jsx38(LinkIcon, { className: "size-4 shrink-0", "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx38("span", { className: "min-w-0 break-all", children: website }),
+          /* @__PURE__ */ jsx38(ArrowTopRightOnSquareIcon2, { className: "size-4 shrink-0", "aria-hidden": "true" })
+        ] }) : null,
+        address !== "" ? /* @__PURE__ */ jsxs29("p", { className: "flex items-start gap-2", children: [
+          /* @__PURE__ */ jsx38(MapPinIcon, { className: "mt-0.5 size-4 shrink-0", "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx38("span", { children: address })
+        ] }) : null
+      ] }) : null
+    ] }) : null,
+    record ? /* @__PURE__ */ jsxs29("section", { className: "px-5 py-5", children: [
+      /* @__PURE__ */ jsx38("h3", { className: "mb-5 font-grotesque text-2xl/7 font-semibold text-white", children: "Account" }),
+      /* @__PURE__ */ jsxs29("dl", { className: "flex max-w-xl flex-col gap-5", children: [
+        /* @__PURE__ */ jsx38(OrgField, { Icon: BuildingOfficeIcon, label: "Registered company", value: record.registeredCompanyName ?? "\u2014" }),
+        /* @__PURE__ */ jsx38(OrgField, { Icon: UserCircleIcon, label: "Account manager", value: contact !== "" ? contact : "\u2014" }),
+        /* @__PURE__ */ jsx38(OrgField, { Icon: EnvelopeIcon3, label: "Billing email", value: record.billingEmail ?? "\u2014" }),
+        /* @__PURE__ */ jsx38(OrgField, { Icon: IdentificationIcon, label: "Company number", value: record.registeredCompanyNumber ?? "\u2014" }),
+        /* @__PURE__ */ jsx38(OrgField, { Icon: IdentificationIcon, label: "Tax ID / VAT", value: record.taxId ?? "\u2014" })
+      ] })
+    ] }) : /* @__PURE__ */ jsx38("p", { className: "p-6 text-sm text-subtle", children: "This tenant is not available." }),
+    /* @__PURE__ */ jsx38(
+      Modal,
+      {
+        open: editing,
+        onClose: () => setEditing(false),
+        title: "Edit tenant",
+        panelClassName: "w-full max-w-2xl",
+        footer: /* @__PURE__ */ jsx38(
+          ModalFooter,
+          {
+            onCancel: () => setEditing(false),
+            primaryLabel: saving ? "Saving..." : "Save",
+            primaryLoading: saving,
+            primaryDisabled: form.name.trim() === "" || saving,
+            onPrimary: () => {
+              setSaving(true);
+              void mutate("/api/resources/tenants/current", {
+                method: "PATCH",
+                body: JSON.stringify({
+                  billingAddressLine1: emptyToNull(form.billingAddressLine1),
+                  billingAddressLine2: emptyToNull(form.billingAddressLine2),
+                  billingCity: emptyToNull(form.billingCity),
+                  billingContactFirstName: emptyToNull(form.billingContactFirstName),
+                  billingContactLastName: emptyToNull(form.billingContactLastName),
+                  billingCountry: emptyToNull(form.billingCountry),
+                  billingCounty: emptyToNull(form.billingCounty),
+                  billingEmail: emptyToNull(form.billingEmail),
+                  billingPostcode: emptyToNull(form.billingPostcode),
+                  name: form.name.trim(),
+                  registeredCompanyName: emptyToNull(form.registeredCompanyName),
+                  registeredCompanyNumber: emptyToNull(form.registeredCompanyNumber),
+                  taxId: emptyToNull(form.taxId),
+                  website: emptyToNull(form.website)
+                })
+              }).then(() => {
+                setEditing(false);
+                return queryClient.invalidateQueries({ queryKey: ["signet", "tenants"] });
+              }).catch(() => void 0).finally(() => setSaving(false));
+            }
+          }
+        ),
+        children: /* @__PURE__ */ jsx38("div", { className: "grid grid-cols-1 gap-4 md:grid-cols-2", children: fields.map(
+          ([key, label]) => key === "billingCountry" ? /* @__PURE__ */ jsx38(
+            CountrySelect,
+            {
+              label,
+              name: key,
+              value: form.billingCountry,
+              onChange: (value) => setForm((current2) => ({ ...current2, billingCountry: value }))
+            },
+            key
+          ) : /* @__PURE__ */ jsx38(
+            Input,
+            {
+              label,
+              name: key,
+              value: form[key],
+              onChange: (event) => setForm((current2) => ({ ...current2, [key]: event.target.value }))
+            },
+            key
+          )
+        ) })
+      }
+    )
+  ] });
+};
+
+// src/components/TenantSwitcher.tsx
+import { Menu as Menu6, MenuButton as MenuButton6, MenuItem as MenuItem6, MenuItems as MenuItems6 } from "@headlessui/react";
+import { CheckIcon as CheckIcon4, ChevronDownIcon as ChevronDownIcon7, PlusIcon as PlusIcon2 } from "@heroicons/react/24/outline";
+import { useEffect as useEffect7, useState as useState15 } from "react";
+import { Fragment as Fragment7, jsx as jsx39, jsxs as jsxs30 } from "react/jsx-runtime";
+var TENANT_COOKIE = "signet-current-tenant";
+var readTenant2 = () => {
+  const prefix = `${TENANT_COOKIE}=`;
+  const match = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix));
+  return match ? decodeURIComponent(match.slice(prefix.length)) : "";
+};
+var writeTenant = (uuid) => {
+  const domain = window.location.hostname.endsWith("aduro.io") ? "; Domain=.aduro.io" : "";
+  document.cookie = `${TENANT_COOKIE}=${encodeURIComponent(uuid)}; Path=/; Max-Age=31536000; SameSite=Lax${domain}`;
+};
+var TenantSwitcher = ({ collapsed = false }) => {
+  const config = useFluentConfig();
+  const queryClient = useQueryClient();
+  const tenants = useSignetQuery(["tenants"], "/api/resources/tenants", true);
+  const items = tenants.data?.items ?? [];
+  const current2 = readTenant2();
+  const selected = items.find((item) => item.uuid === current2) ?? items[0];
+  const [open, setOpen] = useState15(false);
+  const [name, setName] = useState15("");
+  const [line1, setLine1] = useState15("");
+  const [city, setCity] = useState15("");
+  const [postcode, setPostcode] = useState15("");
+  const [saving, setSaving] = useState15(false);
+  useEffect7(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    const tenant = params.get("tenant");
+    const token = config.token();
+    if (!sessionId || !tenant || !token) return;
+    writeTenant(tenant);
+    void signetJson(config.endpoint, token, `/api/resources/tenants/${tenant}/subscription`, {
+      method: "POST",
+      body: JSON.stringify({ sessionId })
+    }).finally(() => {
+      window.location.replace("/");
+    });
+  }, [config]);
+  const choose = (uuid) => {
+    writeTenant(uuid);
+    void queryClient.invalidateQueries({ queryKey: ["signet"] });
+    window.location.assign("/");
+  };
+  const create = async () => {
+    const token = config.token();
+    if (!token || name.trim() === "") return;
+    setSaving(true);
+    try {
+      const created = await signetJson(
+        config.endpoint,
+        token,
+        "/api/resources/tenants",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            billingAddressLine1: line1,
+            billingCity: city,
+            billingPostcode: postcode,
+            name,
+            returnUrl: window.location.origin
+          })
+        }
+      );
+      writeTenant(created.tenant.uuid);
+      if (created.checkoutUrl) {
+        window.location.assign(created.checkoutUrl);
+        return;
+      }
+      window.location.assign("/");
+    } finally {
+      setSaving(false);
+    }
+  };
+  return /* @__PURE__ */ jsxs30(Fragment7, { children: [
+    /* @__PURE__ */ jsxs30(Menu6, { children: [
+      /* @__PURE__ */ jsxs30(MenuButton6, { "aria-label": "Switch tenant", className: "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10", children: [
+        /* @__PURE__ */ jsx39(OrganisationAvatar, { name: selected?.name ?? "Tenant" }),
+        collapsed ? null : /* @__PURE__ */ jsxs30(Fragment7, { children: [
+          /* @__PURE__ */ jsx39("span", { className: "min-w-0 flex-1 truncate text-sm font-semibold text-white", children: selected?.name ?? "No tenant" }),
+          /* @__PURE__ */ jsx39(ChevronDownIcon7, { className: "size-4 shrink-0 text-subtle" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs30(MenuItems6, { portal: true, anchor: { to: "bottom start", gap: 6 }, className: "z-50 flex min-w-56 flex-col rounded-[2px] border border-line bg-secondary text-white shadow-xl outline-none", children: [
+        /* @__PURE__ */ jsx39("div", { className: "max-h-72 overflow-y-auto p-1.5", children: items.map((item) => /* @__PURE__ */ jsx39(MenuItem6, { children: /* @__PURE__ */ jsxs30("button", { type: "button", className: "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white", onClick: () => choose(item.uuid), children: [
+          /* @__PURE__ */ jsx39(OrganisationAvatar, { name: item.name }),
+          /* @__PURE__ */ jsx39("span", { className: "min-w-0 flex-1 truncate", children: item.name }),
+          item.uuid === selected?.uuid ? /* @__PURE__ */ jsx39(CheckIcon4, { className: "size-4 shrink-0 text-orange-100" }) : null
+        ] }) }, item.uuid)) }),
+        /* @__PURE__ */ jsx39("div", { className: "border-t border-line p-1.5", children: /* @__PURE__ */ jsx39(MenuItem6, { children: /* @__PURE__ */ jsxs30("button", { type: "button", className: "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-low-priority data-focus:bg-white/5 data-focus:text-white", onClick: () => setOpen(true), children: [
+          /* @__PURE__ */ jsx39(PlusIcon2, { className: "size-4 shrink-0" }),
+          /* @__PURE__ */ jsx39("span", { children: "Add tenant" })
+        ] }) }) })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx39(
+      Modal,
+      {
+        footer: /* @__PURE__ */ jsx39(
+          ModalFooter,
+          {
+            onCancel: () => setOpen(false),
+            onPrimary: () => void create(),
+            primaryDisabled: saving || name.trim() === "",
+            primaryLabel: saving ? "Saving\u2026" : "Create tenant",
+            primaryLoading: saving
+          }
+        ),
+        onClose: () => setOpen(false),
+        open,
+        title: "Add tenant",
+        children: /* @__PURE__ */ jsxs30("div", { className: "flex flex-col gap-3 p-5", children: [
+          /* @__PURE__ */ jsx39(Input, { label: "Name", name: "tenant-name", onChange: (event) => setName(event.target.value), value: name }),
+          /* @__PURE__ */ jsx39(Input, { label: "Address", name: "tenant-address", onChange: (event) => setLine1(event.target.value), value: line1 }),
+          /* @__PURE__ */ jsx39(Input, { label: "City", name: "tenant-city", onChange: (event) => setCity(event.target.value), value: city }),
+          /* @__PURE__ */ jsx39(Input, { label: "Postcode", name: "tenant-postcode", onChange: (event) => setPostcode(event.target.value), value: postcode })
+        ] })
+      }
+    )
+  ] });
+};
+
+// src/components/SubNav.tsx
+import { Link as Link5 } from "@tanstack/react-router";
+import { jsx as jsx40, jsxs as jsxs31 } from "react/jsx-runtime";
+var tabActive = "flex items-center border-b-2 border-orange-100 px-3 text-sm font-semibold text-orange-100 transition";
+var tabInactive = "flex items-center border-b-2 border-transparent px-3 text-sm font-semibold text-subtle transition hover:text-white";
+var itemId = (item) => item.id ?? item.to ?? item.label;
+function SubNav({
+  items,
+  onChange,
+  value
+}) {
+  return /* @__PURE__ */ jsxs31("div", { className: "shrink-0", children: [
+    /* @__PURE__ */ jsx40("div", { className: "flex h-12 items-stretch gap-1 overflow-x-auto px-5", children: items.map((item) => {
+      const id = itemId(item);
+      if (item.to && !onChange) {
+        return /* @__PURE__ */ jsx40(
+          Link5,
+          {
+            to: item.to,
+            activeProps: { className: tabActive },
+            inactiveProps: { className: tabInactive },
+            children: item.label
+          },
+          id
+        );
+      }
+      const active = value === id;
+      return /* @__PURE__ */ jsx40("button", { type: "button", className: active ? tabActive : tabInactive, onClick: () => onChange?.(id), children: item.label }, id);
+    }) }),
+    /* @__PURE__ */ jsx40("div", { className: "-mt-px border-b border-grey-700t", "aria-hidden": "true" })
+  ] });
+}
+
+// src/components/SummaryCard.tsx
+import { jsx as jsx41, jsxs as jsxs32 } from "react/jsx-runtime";
+function SummaryCard({
+  actions,
+  children,
+  status,
+  title
+}) {
+  return /* @__PURE__ */ jsxs32("div", { className: "rounded-[2px] border border-grey-700t bg-secondary p-5", children: [
+    /* @__PURE__ */ jsxs32("div", { className: "flex items-start justify-between gap-4", children: [
+      /* @__PURE__ */ jsxs32("div", { className: "flex min-w-0 flex-wrap items-center gap-3", children: [
+        /* @__PURE__ */ jsx41("h2", { className: "truncate font-grotesque text-[30px] font-semibold leading-9 text-white", children: title }),
+        status ? /* @__PURE__ */ jsx41("span", { className: "rounded-full bg-white/10 px-2.5 py-1 text-sm font-semibold capitalize text-subtle", children: status }) : null
+      ] }),
+      actions
+    ] }),
+    children
+  ] });
+}
+
+// src/components/OrganisationPage.tsx
+import { Menu as Menu7, MenuButton as MenuButton7, MenuItem as MenuItem7, MenuItems as MenuItems7 } from "@headlessui/react";
+import {
+  ArrowTopRightOnSquareIcon as ArrowTopRightOnSquareIcon3,
+  BuildingOfficeIcon as BuildingOfficeIcon2,
+  EllipsisVerticalIcon as EllipsisVerticalIcon3,
+  EnvelopeIcon as EnvelopeIcon4,
+  IdentificationIcon as IdentificationIcon2,
+  LinkIcon as LinkIcon2,
+  MapPinIcon as MapPinIcon2,
+  UserCircleIcon as UserCircleIcon2
+} from "@heroicons/react/24/outline";
+import { Children, useState as useState16 } from "react";
+import { jsx as jsx42, jsxs as jsxs33 } from "react/jsx-runtime";
+var blank2 = {
+  billingAddressLine1: "",
+  billingAddressLine2: "",
+  billingCity: "",
+  billingContactFirstName: "",
+  billingContactLastName: "",
+  billingCountry: "",
+  billingCounty: "",
+  billingEmail: "",
+  billingPostcode: "",
+  name: "",
+  registeredCompanyName: "",
+  registeredCompanyNumber: "",
+  taxId: "",
+  website: ""
+};
+var fields2 = [
+  ["name", "Name"],
+  ["registeredCompanyName", "Registered company name"],
+  ["website", "Website"],
+  ["billingEmail", "Billing email"],
+  ["billingContactFirstName", "Billing contact first name"],
+  ["billingContactLastName", "Billing contact last name"],
+  ["registeredCompanyNumber", "Company number"],
+  ["taxId", "Tax ID / VAT"],
+  ["billingAddressLine1", "Billing line 1"],
+  ["billingAddressLine2", "Billing line 2"],
+  ["billingCity", "City"],
+  ["billingCounty", "County"],
+  ["billingPostcode", "Postcode"],
+  ["billingCountry", "Country"]
+];
+var emptyToNull2 = (value) => {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+};
+var menuItemClassName5 = "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white";
+var OrgField2 = ({
+  Icon,
+  label,
+  value
+}) => /* @__PURE__ */ jsxs33("div", { children: [
+  /* @__PURE__ */ jsx42("dt", { className: "text-xs leading-[18px] text-low-priority", children: label }),
+  /* @__PURE__ */ jsxs33("dd", { className: "mt-2 flex min-w-0 items-center gap-2 text-sm text-white", children: [
+    /* @__PURE__ */ jsx42(Icon, { className: "size-4 shrink-0 text-low-priority", "aria-hidden": "true" }),
+    /* @__PURE__ */ jsx42("span", { className: "min-w-0", children: value })
   ] })
 ] });
 var OrganisationPage = ({ columns }) => {
@@ -7004,9 +7364,9 @@ var OrganisationPage = ({ columns }) => {
   );
   const mutate = useSignetMutation();
   const queryClient = useQueryClient();
-  const [editing, setEditing] = useState14(false);
-  const [form, setForm] = useState14(blank);
-  const [saving, setSaving] = useState14(false);
+  const [editing, setEditing] = useState16(false);
+  const [form, setForm] = useState16(blank2);
+  const [saving, setSaving] = useState16(false);
   const record = organisation.data;
   const openEdit = () => {
     if (!record) return;
@@ -7031,60 +7391,60 @@ var OrganisationPage = ({ columns }) => {
   const address = record ? [record.billingAddressLine1, record.billingAddressLine2, record.billingCity, record.billingCounty, record.billingPostcode, countryName(record.billingCountry)].map((part) => part?.trim()).filter((part) => part).join(", ") : "";
   const contact = record ? [record.billingContactFirstName, record.billingContactLastName].filter(Boolean).join(" ") : "";
   if (!canManage) {
-    return /* @__PURE__ */ jsx40("p", { className: "p-6 text-sm text-subtle", children: "You do not have access to this organisation." });
+    return /* @__PURE__ */ jsx42("p", { className: "p-6 text-sm text-subtle", children: "You do not have access to this organisation." });
   }
   const website = record?.website?.trim() ?? "";
   const websiteHref = /^https?:\/\//i.test(website) ? website : `https://${website}`;
   const extraColumns = Children.toArray(columns);
-  return /* @__PURE__ */ jsxs31("section", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto", children: [
-    /* @__PURE__ */ jsx40(PageHeader, { title: "Organisation" }),
-    record ? /* @__PURE__ */ jsxs31("div", { className: "border-b border-grey-700t px-5 py-5", children: [
-      /* @__PURE__ */ jsxs31("div", { className: "flex items-start justify-between gap-4", children: [
-        /* @__PURE__ */ jsx40("h2", { className: "min-w-0 truncate font-grotesque text-[30px] font-semibold leading-9 text-white", children: record.name }),
-        /* @__PURE__ */ jsxs31(Menu5, { children: [
-          /* @__PURE__ */ jsx40(MenuButton5, { "aria-label": "Organisation actions", className: "rounded-[2px] p-2 text-subtle outline-none transition hover:bg-white/5 hover:text-white", children: /* @__PURE__ */ jsx40(EllipsisVerticalIcon2, { className: "size-5" }) }),
-          /* @__PURE__ */ jsx40(MenuItems5, { portal: true, anchor: { to: "bottom end", gap: 6 }, className: "z-50 min-w-44 rounded-[2px] border border-line bg-secondary text-white shadow-xl outline-hidden", children: /* @__PURE__ */ jsx40("div", { className: "p-1.5", children: /* @__PURE__ */ jsx40(MenuItem5, { children: /* @__PURE__ */ jsx40("button", { type: "button", className: menuItemClassName4, onClick: openEdit, children: "Edit organisation" }) }) }) })
+  return /* @__PURE__ */ jsxs33("section", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto", children: [
+    /* @__PURE__ */ jsx42(PageHeader, { title: "Organisation" }),
+    record ? /* @__PURE__ */ jsxs33("div", { className: "border-b border-grey-700t px-5 py-5", children: [
+      /* @__PURE__ */ jsxs33("div", { className: "flex items-start justify-between gap-4", children: [
+        /* @__PURE__ */ jsx42("h2", { className: "min-w-0 truncate font-grotesque text-[30px] font-semibold leading-9 text-white", children: record.name }),
+        /* @__PURE__ */ jsxs33(Menu7, { children: [
+          /* @__PURE__ */ jsx42(MenuButton7, { "aria-label": "Organisation actions", className: "rounded-[2px] p-2 text-subtle outline-none transition hover:bg-white/5 hover:text-white", children: /* @__PURE__ */ jsx42(EllipsisVerticalIcon3, { className: "size-5" }) }),
+          /* @__PURE__ */ jsx42(MenuItems7, { portal: true, anchor: { to: "bottom end", gap: 6 }, className: "z-50 min-w-44 rounded-[2px] border border-line bg-secondary text-white shadow-xl outline-hidden", children: /* @__PURE__ */ jsx42("div", { className: "p-1.5", children: /* @__PURE__ */ jsx42(MenuItem7, { children: /* @__PURE__ */ jsx42("button", { type: "button", className: menuItemClassName5, onClick: openEdit, children: "Edit organisation" }) }) }) })
         ] })
       ] }),
-      website !== "" || address !== "" ? /* @__PURE__ */ jsxs31("div", { className: "mt-4 flex flex-col gap-2 text-sm text-subtle", children: [
-        website !== "" ? /* @__PURE__ */ jsxs31("a", { className: "inline-flex w-fit max-w-full items-center gap-2 transition hover:text-white", href: websiteHref, rel: "noopener noreferrer", target: "_blank", children: [
-          /* @__PURE__ */ jsx40(LinkIcon, { className: "size-4 shrink-0", "aria-hidden": "true" }),
-          /* @__PURE__ */ jsx40("span", { className: "min-w-0 break-all", children: website }),
-          /* @__PURE__ */ jsx40(ArrowTopRightOnSquareIcon2, { className: "size-4 shrink-0", "aria-hidden": "true" })
+      website !== "" || address !== "" ? /* @__PURE__ */ jsxs33("div", { className: "mt-4 flex flex-col gap-2 text-sm text-subtle", children: [
+        website !== "" ? /* @__PURE__ */ jsxs33("a", { className: "inline-flex w-fit max-w-full items-center gap-2 transition hover:text-white", href: websiteHref, rel: "noopener noreferrer", target: "_blank", children: [
+          /* @__PURE__ */ jsx42(LinkIcon2, { className: "size-4 shrink-0", "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx42("span", { className: "min-w-0 break-all", children: website }),
+          /* @__PURE__ */ jsx42(ArrowTopRightOnSquareIcon3, { className: "size-4 shrink-0", "aria-hidden": "true" })
         ] }) : null,
-        address !== "" ? /* @__PURE__ */ jsxs31("p", { className: "flex items-start gap-2", children: [
-          /* @__PURE__ */ jsx40(MapPinIcon, { className: "mt-0.5 size-4 shrink-0", "aria-hidden": "true" }),
-          /* @__PURE__ */ jsx40("span", { children: address })
+        address !== "" ? /* @__PURE__ */ jsxs33("p", { className: "flex items-start gap-2", children: [
+          /* @__PURE__ */ jsx42(MapPinIcon2, { className: "mt-0.5 size-4 shrink-0", "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx42("span", { children: address })
         ] }) : null
       ] }) : null
     ] }) : null,
-    /* @__PURE__ */ jsxs31(
+    /* @__PURE__ */ jsxs33(
       "div",
       {
         className: extraColumns.length > 0 ? "flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch lg:divide-x lg:divide-grey-700t" : "",
         children: [
-          record ? /* @__PURE__ */ jsxs31("section", { className: extraColumns.length > 0 ? "flex min-w-0 flex-1 flex-col px-5 py-5" : "px-5 py-5", children: [
-            /* @__PURE__ */ jsx40("h3", { className: "mb-5 font-grotesque text-2xl/7 font-semibold text-white", children: "Account" }),
-            /* @__PURE__ */ jsxs31("dl", { className: "flex max-w-xl flex-col gap-5", children: [
-              /* @__PURE__ */ jsx40(OrgField, { Icon: BuildingOfficeIcon, label: "Registered company", value: record.registeredCompanyName ?? "\u2014" }),
-              /* @__PURE__ */ jsx40(OrgField, { Icon: UserCircleIcon, label: "Account manager", value: contact !== "" ? contact : "\u2014" }),
-              /* @__PURE__ */ jsx40(OrgField, { Icon: EnvelopeIcon3, label: "Billing email", value: record.billingEmail ?? "\u2014" }),
-              /* @__PURE__ */ jsx40(OrgField, { Icon: IdentificationIcon, label: "Company number", value: record.registeredCompanyNumber ?? "\u2014" }),
-              /* @__PURE__ */ jsx40(OrgField, { Icon: IdentificationIcon, label: "Tax ID / VAT", value: record.taxId ?? "\u2014" })
+          record ? /* @__PURE__ */ jsxs33("section", { className: extraColumns.length > 0 ? "flex min-w-0 flex-1 flex-col px-5 py-5" : "px-5 py-5", children: [
+            /* @__PURE__ */ jsx42("h3", { className: "mb-5 font-grotesque text-2xl/7 font-semibold text-white", children: "Account" }),
+            /* @__PURE__ */ jsxs33("dl", { className: "flex max-w-xl flex-col gap-5", children: [
+              /* @__PURE__ */ jsx42(OrgField2, { Icon: BuildingOfficeIcon2, label: "Registered company", value: record.registeredCompanyName ?? "\u2014" }),
+              /* @__PURE__ */ jsx42(OrgField2, { Icon: UserCircleIcon2, label: "Account manager", value: contact !== "" ? contact : "\u2014" }),
+              /* @__PURE__ */ jsx42(OrgField2, { Icon: EnvelopeIcon4, label: "Billing email", value: record.billingEmail ?? "\u2014" }),
+              /* @__PURE__ */ jsx42(OrgField2, { Icon: IdentificationIcon2, label: "Company number", value: record.registeredCompanyNumber ?? "\u2014" }),
+              /* @__PURE__ */ jsx42(OrgField2, { Icon: IdentificationIcon2, label: "Tax ID / VAT", value: record.taxId ?? "\u2014" })
             ] })
-          ] }) : organisation.isPending ? /* @__PURE__ */ jsx40(FullLoader, {}) : /* @__PURE__ */ jsx40("p", { className: "p-6 text-sm text-subtle", children: "This organisation is not available." }),
-          extraColumns.map((column, index) => /* @__PURE__ */ jsx40("div", { className: "flex min-w-0 flex-1 flex-col", children: column }, index))
+          ] }) : organisation.isPending ? /* @__PURE__ */ jsx42(FullLoader, {}) : /* @__PURE__ */ jsx42("p", { className: "p-6 text-sm text-subtle", children: "This organisation is not available." }),
+          extraColumns.map((column, index) => /* @__PURE__ */ jsx42("div", { className: "flex min-w-0 flex-1 flex-col", children: column }, index))
         ]
       }
     ),
-    /* @__PURE__ */ jsx40(
+    /* @__PURE__ */ jsx42(
       Modal,
       {
         open: editing,
         onClose: () => setEditing(false),
         title: "Edit organisation",
         panelClassName: "w-full max-w-2xl",
-        footer: /* @__PURE__ */ jsx40(
+        footer: /* @__PURE__ */ jsx42(
           ModalFooter,
           {
             onCancel: () => setEditing(false),
@@ -7096,20 +7456,20 @@ var OrganisationPage = ({ columns }) => {
               void mutate(`/api/resources/organisations/${organisationUuid}`, {
                 method: "PATCH",
                 body: JSON.stringify({
-                  billingAddressLine1: emptyToNull(form.billingAddressLine1),
-                  billingAddressLine2: emptyToNull(form.billingAddressLine2),
-                  billingCity: emptyToNull(form.billingCity),
-                  billingContactFirstName: emptyToNull(form.billingContactFirstName),
-                  billingContactLastName: emptyToNull(form.billingContactLastName),
-                  billingCountry: emptyToNull(form.billingCountry),
-                  billingCounty: emptyToNull(form.billingCounty),
-                  billingEmail: emptyToNull(form.billingEmail),
-                  billingPostcode: emptyToNull(form.billingPostcode),
+                  billingAddressLine1: emptyToNull2(form.billingAddressLine1),
+                  billingAddressLine2: emptyToNull2(form.billingAddressLine2),
+                  billingCity: emptyToNull2(form.billingCity),
+                  billingContactFirstName: emptyToNull2(form.billingContactFirstName),
+                  billingContactLastName: emptyToNull2(form.billingContactLastName),
+                  billingCountry: emptyToNull2(form.billingCountry),
+                  billingCounty: emptyToNull2(form.billingCounty),
+                  billingEmail: emptyToNull2(form.billingEmail),
+                  billingPostcode: emptyToNull2(form.billingPostcode),
                   name: form.name.trim(),
-                  registeredCompanyName: emptyToNull(form.registeredCompanyName),
-                  registeredCompanyNumber: emptyToNull(form.registeredCompanyNumber),
-                  taxId: emptyToNull(form.taxId),
-                  website: emptyToNull(form.website)
+                  registeredCompanyName: emptyToNull2(form.registeredCompanyName),
+                  registeredCompanyNumber: emptyToNull2(form.registeredCompanyNumber),
+                  taxId: emptyToNull2(form.taxId),
+                  website: emptyToNull2(form.website)
                 })
               }).then(() => {
                 setEditing(false);
@@ -7118,8 +7478,8 @@ var OrganisationPage = ({ columns }) => {
             }
           }
         ),
-        children: /* @__PURE__ */ jsx40("div", { className: "grid grid-cols-1 gap-4 md:grid-cols-2", children: fields.map(
-          ([key, label]) => key === "billingCountry" ? /* @__PURE__ */ jsx40(
+        children: /* @__PURE__ */ jsx42("div", { className: "grid grid-cols-1 gap-4 md:grid-cols-2", children: fields2.map(
+          ([key, label]) => key === "billingCountry" ? /* @__PURE__ */ jsx42(
             CountrySelect,
             {
               label,
@@ -7128,7 +7488,7 @@ var OrganisationPage = ({ columns }) => {
               onChange: (value) => setForm((current2) => ({ ...current2, billingCountry: value }))
             },
             key
-          ) : /* @__PURE__ */ jsx40(
+          ) : /* @__PURE__ */ jsx42(
             Input,
             {
               label,
@@ -7145,9 +7505,9 @@ var OrganisationPage = ({ columns }) => {
 };
 
 // src/components/TeamPage.tsx
-import { Menu as Menu6, MenuButton as MenuButton6, MenuItem as MenuItem6, MenuItems as MenuItems6 } from "@headlessui/react";
-import { EllipsisVerticalIcon as EllipsisVerticalIcon3, MagnifyingGlassIcon as MagnifyingGlassIcon2, PlusIcon as PlusIcon2 } from "@heroicons/react/24/outline";
-import { useState as useState16 } from "react";
+import { Menu as Menu8, MenuButton as MenuButton8, MenuItem as MenuItem8, MenuItems as MenuItems8 } from "@headlessui/react";
+import { EllipsisVerticalIcon as EllipsisVerticalIcon4, MagnifyingGlassIcon as MagnifyingGlassIcon2, PlusIcon as PlusIcon3 } from "@heroicons/react/24/outline";
+import { useState as useState18 } from "react";
 
 // src/signet/useTeam.ts
 var withClient = (path, clientId, organisationUuid) => {
@@ -7195,8 +7555,8 @@ var useTeam = () => {
 };
 
 // src/components/DataTable.tsx
-import { useState as useState15 } from "react";
-import { jsx as jsx41, jsxs as jsxs32 } from "react/jsx-runtime";
+import { useState as useState17 } from "react";
+import { jsx as jsx43, jsxs as jsxs34 } from "react/jsx-runtime";
 function DataTable({
   columns,
   empty = "Nothing here yet.",
@@ -7204,21 +7564,21 @@ function DataTable({
   rows,
   rowKey
 }) {
-  const [page, setPage] = useState15(1);
-  const [perPage, setPerPage] = useState15(pageSize);
+  const [page, setPage] = useState17(1);
+  const [perPage, setPerPage] = useState17(pageSize);
   const lastPage = Math.max(1, Math.ceil(rows.length / perPage));
   const current2 = Math.min(page, lastPage);
   const visible = rows.slice((current2 - 1) * perPage, current2 * perPage);
   const width = columns.length === 0 ? 100 : Math.floor(100 / columns.length);
-  return /* @__PURE__ */ jsxs32(TableContainer, { flush: true, className: "min-h-0 flex-1", children: [
-    /* @__PURE__ */ jsx41(
+  return /* @__PURE__ */ jsxs34(TableContainer, { flush: true, className: "min-h-0 flex-1", children: [
+    /* @__PURE__ */ jsx43(
       TableColumns,
       {
         widthType: "pc",
         columns: columns.map((column) => ({ heading: column.header, width }))
       }
     ),
-    visible.length === 0 ? typeof empty === "string" ? /* @__PURE__ */ jsx41("p", { className: "px-5 py-6 text-sm text-subtle", children: empty }) : empty : /* @__PURE__ */ jsx41(
+    visible.length === 0 ? typeof empty === "string" ? /* @__PURE__ */ jsx43("p", { className: "px-5 py-6 text-sm text-subtle", children: empty }) : empty : /* @__PURE__ */ jsx43(
       TableRows,
       {
         widthType: "pc",
@@ -7231,7 +7591,7 @@ function DataTable({
         }))
       }
     ),
-    /* @__PURE__ */ jsx41(
+    /* @__PURE__ */ jsx43(
       TablePagination,
       {
         page: current2,
@@ -7248,16 +7608,16 @@ function DataTable({
 }
 
 // src/components/TeamPage.tsx
-import { jsx as jsx42, jsxs as jsxs33 } from "react/jsx-runtime";
-var menuItemClassName5 = "w-full rounded-[2px] px-2.5 py-2 text-left text-sm hover:bg-white/5";
+import { jsx as jsx44, jsxs as jsxs35 } from "react/jsx-runtime";
+var menuItemClassName6 = "w-full rounded-[2px] px-2.5 py-2 text-left text-sm hover:bg-white/5";
 var TeamPage = ({
   onManageUser
 }) => {
   const team = useTeam();
-  const [email, setEmail] = useState16("");
-  const [role, setRole] = useState16("member");
-  const [search, setSearch] = useState16("");
-  const [inviting, setInviting] = useState16(false);
+  const [email, setEmail] = useState18("");
+  const [role, setRole] = useState18("member");
+  const [search, setSearch] = useState18("");
+  const [inviting, setInviting] = useState18(false);
   const query = search.trim().toLowerCase();
   const members = team.members.filter((member) => {
     if (query === "") return true;
@@ -7269,17 +7629,17 @@ var TeamPage = ({
     setRole("member");
   };
   if (!team.canManage) {
-    return /* @__PURE__ */ jsx42("p", { className: "p-6 text-sm text-subtle", children: "You do not have access to this team." });
+    return /* @__PURE__ */ jsx44("p", { className: "p-6 text-sm text-subtle", children: "You do not have access to this team." });
   }
-  return /* @__PURE__ */ jsxs33("section", { className: "flex min-h-0 flex-1 flex-col", children: [
-    /* @__PURE__ */ jsx42(
+  return /* @__PURE__ */ jsxs35("section", { className: "flex min-h-0 flex-1 flex-col", children: [
+    /* @__PURE__ */ jsx44(
       PageHeader,
       {
         title: "Team",
-        button: { icon: PlusIcon2, label: "Invite", onClick: () => setInviting(true) }
+        button: { icon: PlusIcon3, label: "Invite", onClick: () => setInviting(true) }
       }
     ),
-    /* @__PURE__ */ jsx42("div", { className: "flex items-center justify-between gap-3 border-b border-grey-700t px-5 py-3", children: /* @__PURE__ */ jsx42("div", { className: "w-full sm:w-72", children: /* @__PURE__ */ jsx42(
+    /* @__PURE__ */ jsx44("div", { className: "flex items-center justify-between gap-3 border-b border-grey-700t px-5 py-3", children: /* @__PURE__ */ jsx44("div", { className: "w-full sm:w-72", children: /* @__PURE__ */ jsx44(
       Input,
       {
         Icon: MagnifyingGlassIcon2,
@@ -7289,13 +7649,13 @@ var TeamPage = ({
         onChange: (event) => setSearch(event.target.value)
       }
     ) }) }),
-    /* @__PURE__ */ jsx42(
+    /* @__PURE__ */ jsx44(
       Modal,
       {
         open: inviting,
         onClose: close,
         title: "Invite",
-        footer: /* @__PURE__ */ jsx42(
+        footer: /* @__PURE__ */ jsx44(
           ModalFooter,
           {
             onCancel: close,
@@ -7306,22 +7666,22 @@ var TeamPage = ({
             }
           }
         ),
-        children: /* @__PURE__ */ jsxs33("div", { className: "flex flex-col gap-4", children: [
-          /* @__PURE__ */ jsx42(Input, { label: "Email", name: "member-email", type: "email", value: email, onChange: (event) => setEmail(event.target.value) }),
-          /* @__PURE__ */ jsx42(Select, { label: "Role", name: "member-role", value: role, options: team.roleOptions, onChange: setRole })
+        children: /* @__PURE__ */ jsxs35("div", { className: "flex flex-col gap-4", children: [
+          /* @__PURE__ */ jsx44(Input, { label: "Email", name: "member-email", type: "email", value: email, onChange: (event) => setEmail(event.target.value) }),
+          /* @__PURE__ */ jsx44(Select, { label: "Role", name: "member-role", value: role, options: team.roleOptions, onChange: setRole })
         ] })
       }
     ),
-    /* @__PURE__ */ jsx42(
+    /* @__PURE__ */ jsx44(
       DataTable,
       {
-        empty: team.pending ? /* @__PURE__ */ jsx42(FullLoader, {}) : "No members yet.",
+        empty: team.pending ? /* @__PURE__ */ jsx44(FullLoader, {}) : "No members yet.",
         rowKey: (member) => member.userUuid,
         rows: members,
         columns: [
           { cell: (member) => member.email, header: "Email", key: "email" },
           {
-            cell: (member) => /* @__PURE__ */ jsx42(
+            cell: (member) => /* @__PURE__ */ jsx44(
               Select,
               {
                 name: `member-role-${member.userUuid}`,
@@ -7337,7 +7697,7 @@ var TeamPage = ({
             key: "role"
           },
           {
-            cell: (member) => /* @__PURE__ */ jsx42(
+            cell: (member) => /* @__PURE__ */ jsx44(
               MemberMenu,
               {
                 member,
@@ -7357,34 +7717,34 @@ var MemberMenu = ({
   member,
   onManage,
   onRemove
-}) => /* @__PURE__ */ jsxs33(Menu6, { children: [
-  /* @__PURE__ */ jsx42(
-    MenuButton6,
+}) => /* @__PURE__ */ jsxs35(Menu8, { children: [
+  /* @__PURE__ */ jsx44(
+    MenuButton8,
     {
       "aria-label": `Actions for ${member.email}`,
       className: "rounded-[2px] p-1 text-subtle outline-none hover:bg-white/5 hover:text-white",
-      children: /* @__PURE__ */ jsx42(EllipsisVerticalIcon3, { className: "size-5" })
+      children: /* @__PURE__ */ jsx44(EllipsisVerticalIcon4, { className: "size-5" })
     }
   ),
-  /* @__PURE__ */ jsxs33(
-    MenuItems6,
+  /* @__PURE__ */ jsxs35(
+    MenuItems8,
     {
       portal: true,
       anchor: { to: "bottom end", gap: 6 },
       className: "z-50 flex min-w-44 flex-col rounded-[2px] border border-line bg-secondary p-1.5 text-white shadow-xl outline-none",
       children: [
-        onManage ? /* @__PURE__ */ jsx42(MenuItem6, { children: /* @__PURE__ */ jsx42("button", { type: "button", className: menuItemClassName5, onClick: onManage, children: "Manage user" }) }) : null,
-        /* @__PURE__ */ jsx42(MenuItem6, { children: /* @__PURE__ */ jsx42("button", { type: "button", className: menuItemClassName5, onClick: onRemove, children: "Remove" }) })
+        onManage ? /* @__PURE__ */ jsx44(MenuItem8, { children: /* @__PURE__ */ jsx44("button", { type: "button", className: menuItemClassName6, onClick: onManage, children: "Manage user" }) }) : null,
+        /* @__PURE__ */ jsx44(MenuItem8, { children: /* @__PURE__ */ jsx44("button", { type: "button", className: menuItemClassName6, onClick: onRemove, children: "Remove" }) })
       ]
     }
   )
 ] });
 
 // src/components/SettingsPage.tsx
-import { Menu as Menu7, MenuButton as MenuButton7, MenuItem as MenuItem7, MenuItems as MenuItems7 } from "@headlessui/react";
-import { EllipsisVerticalIcon as EllipsisVerticalIcon4 } from "@heroicons/react/24/outline";
-import { useEffect as useEffect7, useState as useState17 } from "react";
-import { jsx as jsx43, jsxs as jsxs34 } from "react/jsx-runtime";
+import { Menu as Menu9, MenuButton as MenuButton9, MenuItem as MenuItem9, MenuItems as MenuItems9 } from "@headlessui/react";
+import { EllipsisVerticalIcon as EllipsisVerticalIcon5 } from "@heroicons/react/24/outline";
+import { useEffect as useEffect8, useState as useState19 } from "react";
+import { jsx as jsx45, jsxs as jsxs36 } from "react/jsx-runtime";
 var sideNavItemClassName = (active) => ["w-full rounded-[2px] px-3 py-2 text-left text-sm font-semibold outline-none transition", active ? "bg-orange-100/10 text-orange-100" : "text-low hover:bg-white/5 hover:text-white"].join(" ");
 var serviceLabel = (provider) => {
   const names = {
@@ -7396,7 +7756,7 @@ var serviceLabel = (provider) => {
   };
   return names[provider] ?? roleLabel(provider);
 };
-var menuItemClassName6 = "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white";
+var menuItemClassName7 = "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white";
 var sectionFromHash = (hasNotifications) => {
   const hash = window.location.hash.replace("#", "");
   if (hash === "connected-services") return "connected-services";
@@ -7408,16 +7768,16 @@ var SettingsPage = () => {
   const { currentOrganisation, user } = useDirectory();
   const groups = useNotificationGroups();
   const hasNotifications = (groups?.length ?? 0) > 0;
-  const [section, setSection] = useState17(() => sectionFromHash(hasNotifications));
-  const [providers, setProviders] = useState17([]);
-  const [confirmRemove, setConfirmRemove] = useState17(null);
-  const [removing, setRemoving] = useState17(false);
+  const [section, setSection] = useState19(() => sectionFromHash(hasNotifications));
+  const [providers, setProviders] = useState19([]);
+  const [confirmRemove, setConfirmRemove] = useState19(null);
+  const [removing, setRemoving] = useState19(false);
   const mutate = useSignetMutation();
   const queryClient = useQueryClient();
   const given = user.given_name?.trim() ?? "";
   const family = user.family_name?.trim() ?? "";
   const name = [given, family].filter((part) => part !== "").join(" ") || user.name?.trim() || user.email;
-  useEffect7(() => {
+  useEffect8(() => {
     void fetch(`${endpoint.replace(/\/$/, "")}/oauth/providers`).then(async (response) => {
       if (!response.ok) return;
       const body = await response.json();
@@ -7429,54 +7789,54 @@ var SettingsPage = () => {
     setSection(next);
     window.history.replaceState(null, "", next === "account" ? "/settings" : `/settings#${next}`);
   };
-  return /* @__PURE__ */ jsxs34("section", { className: "flex min-h-0 flex-1 flex-col", children: [
-    /* @__PURE__ */ jsx43(PageHeader, { title: "Settings" }),
-    /* @__PURE__ */ jsxs34("div", { className: "flex min-h-0 flex-1 overflow-hidden", children: [
-      /* @__PURE__ */ jsxs34("aside", { className: "flex w-52 shrink-0 flex-col gap-0.5 self-stretch border-r border-grey-700t px-3 py-4", "aria-label": "Settings sections", children: [
-        /* @__PURE__ */ jsx43("button", { type: "button", className: sideNavItemClassName(section === "account"), onClick: () => choose("account"), children: "Account" }),
-        hasNotifications ? /* @__PURE__ */ jsx43("button", { type: "button", className: sideNavItemClassName(section === "notifications"), onClick: () => choose("notifications"), children: "Notifications" }) : null,
-        /* @__PURE__ */ jsx43("button", { type: "button", className: sideNavItemClassName(section === "connected-services"), onClick: () => choose("connected-services"), children: "Connected Services" })
+  return /* @__PURE__ */ jsxs36("section", { className: "flex min-h-0 flex-1 flex-col", children: [
+    /* @__PURE__ */ jsx45(PageHeader, { title: "Settings" }),
+    /* @__PURE__ */ jsxs36("div", { className: "flex min-h-0 flex-1 overflow-hidden", children: [
+      /* @__PURE__ */ jsxs36("aside", { className: "flex w-52 shrink-0 flex-col gap-0.5 self-stretch border-r border-grey-700t px-3 py-4", "aria-label": "Settings sections", children: [
+        /* @__PURE__ */ jsx45("button", { type: "button", className: sideNavItemClassName(section === "account"), onClick: () => choose("account"), children: "Account" }),
+        hasNotifications ? /* @__PURE__ */ jsx45("button", { type: "button", className: sideNavItemClassName(section === "notifications"), onClick: () => choose("notifications"), children: "Notifications" }) : null,
+        /* @__PURE__ */ jsx45("button", { type: "button", className: sideNavItemClassName(section === "connected-services"), onClick: () => choose("connected-services"), children: "Connected Services" })
       ] }),
-      /* @__PURE__ */ jsxs34("div", { className: section === "connected-services" ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-y-auto p-5", children: [
-        section === "account" ? /* @__PURE__ */ jsx43("div", { className: "flex max-w-3xl flex-col gap-8", children: /* @__PURE__ */ jsxs34("section", { children: [
-          /* @__PURE__ */ jsx43("h2", { className: "mb-4 font-grotesque text-xl font-semibold", children: "Profile" }),
-          /* @__PURE__ */ jsxs34("dl", { className: "grid grid-cols-1 gap-4 md:grid-cols-2", children: [
-            /* @__PURE__ */ jsxs34("div", { children: [
-              /* @__PURE__ */ jsx43("dt", { className: "mb-1 text-sm text-subtle", children: "Role" }),
-              /* @__PURE__ */ jsx43("dd", { className: "font-semibold text-orange-100", children: displayRole(currentOrganisation?.role, user.role) || "\u2014" })
+      /* @__PURE__ */ jsxs36("div", { className: section === "connected-services" ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-y-auto p-5", children: [
+        section === "account" ? /* @__PURE__ */ jsx45("div", { className: "flex max-w-3xl flex-col gap-8", children: /* @__PURE__ */ jsxs36("section", { children: [
+          /* @__PURE__ */ jsx45("h2", { className: "mb-4 font-grotesque text-xl font-semibold", children: "Profile" }),
+          /* @__PURE__ */ jsxs36("dl", { className: "grid grid-cols-1 gap-4 md:grid-cols-2", children: [
+            /* @__PURE__ */ jsxs36("div", { children: [
+              /* @__PURE__ */ jsx45("dt", { className: "mb-1 text-sm text-subtle", children: "Role" }),
+              /* @__PURE__ */ jsx45("dd", { className: "font-semibold text-orange-100", children: displayRole(currentOrganisation?.role, user.role) || "\u2014" })
             ] }),
-            /* @__PURE__ */ jsxs34("div", { children: [
-              /* @__PURE__ */ jsx43("dt", { className: "mb-1 text-sm text-subtle", children: "Name" }),
-              /* @__PURE__ */ jsx43("dd", { className: "text-low", children: name || "\u2014" })
+            /* @__PURE__ */ jsxs36("div", { children: [
+              /* @__PURE__ */ jsx45("dt", { className: "mb-1 text-sm text-subtle", children: "Name" }),
+              /* @__PURE__ */ jsx45("dd", { className: "text-low", children: name || "\u2014" })
             ] }),
-            /* @__PURE__ */ jsxs34("div", { children: [
-              /* @__PURE__ */ jsx43("dt", { className: "mb-1 text-sm text-subtle", children: "Email" }),
-              /* @__PURE__ */ jsx43("dd", { className: "text-low", children: user.email || "\u2014" })
+            /* @__PURE__ */ jsxs36("div", { children: [
+              /* @__PURE__ */ jsx45("dt", { className: "mb-1 text-sm text-subtle", children: "Email" }),
+              /* @__PURE__ */ jsx45("dd", { className: "text-low", children: user.email || "\u2014" })
             ] })
           ] })
         ] }) }) : null,
-        section === "notifications" && groups ? /* @__PURE__ */ jsx43("div", { className: "flex max-w-3xl flex-col gap-8", children: groups.map((group) => /* @__PURE__ */ jsxs34("section", { children: [
-          /* @__PURE__ */ jsx43("h2", { className: "mb-4 font-grotesque text-xl font-semibold", children: group.title }),
-          /* @__PURE__ */ jsx43("ul", { className: "flex flex-col gap-3", children: group.options.map((option) => /* @__PURE__ */ jsxs34("li", { className: "flex items-center justify-between gap-4", children: [
-            /* @__PURE__ */ jsxs34("span", { children: [
-              /* @__PURE__ */ jsx43("span", { className: "block text-sm text-white", children: option.label }),
-              option.description ? /* @__PURE__ */ jsx43("span", { className: "block text-xs text-subtle", children: option.description }) : null
+        section === "notifications" && groups ? /* @__PURE__ */ jsx45("div", { className: "flex max-w-3xl flex-col gap-8", children: groups.map((group) => /* @__PURE__ */ jsxs36("section", { children: [
+          /* @__PURE__ */ jsx45("h2", { className: "mb-4 font-grotesque text-xl font-semibold", children: group.title }),
+          /* @__PURE__ */ jsx45("ul", { className: "flex flex-col gap-3", children: group.options.map((option) => /* @__PURE__ */ jsxs36("li", { className: "flex items-center justify-between gap-4", children: [
+            /* @__PURE__ */ jsxs36("span", { children: [
+              /* @__PURE__ */ jsx45("span", { className: "block text-sm text-white", children: option.label }),
+              option.description ? /* @__PURE__ */ jsx45("span", { className: "block text-xs text-subtle", children: option.description }) : null
             ] }),
-            /* @__PURE__ */ jsx43("button", { type: "button", "aria-pressed": option.enabled, className: "text-sm font-semibold text-orange-100", onClick: () => option.onChange(!option.enabled), children: option.enabled ? "On" : "Off" })
+            /* @__PURE__ */ jsx45("button", { type: "button", "aria-pressed": option.enabled, className: "text-sm font-semibold text-orange-100", onClick: () => option.onChange(!option.enabled), children: option.enabled ? "On" : "Off" })
           ] }, option.id)) })
         ] }, group.id)) }) : null,
-        section === "connected-services" ? /* @__PURE__ */ jsx43(
+        section === "connected-services" ? /* @__PURE__ */ jsx45(
           DataTable,
           {
             empty: "No connected services.",
             rowKey: (provider) => provider,
             rows: connected,
             columns: [
-              { cell: (provider) => /* @__PURE__ */ jsx43("span", { className: "font-semibold text-white", children: serviceLabel(provider) }), header: "Service", key: "service" },
+              { cell: (provider) => /* @__PURE__ */ jsx45("span", { className: "font-semibold text-white", children: serviceLabel(provider) }), header: "Service", key: "service" },
               {
                 cell: (provider) => {
                   const connected2 = user.connections.some((connection) => connection.method === provider);
-                  return connected2 ? /* @__PURE__ */ jsx43(Pill, { size: "small", colour: "#3EB077", text: "Connected", outline: true }) : /* @__PURE__ */ jsx43("span", { className: "text-sm text-low", children: "Not connected" });
+                  return connected2 ? /* @__PURE__ */ jsx45(Pill, { size: "small", colour: "#3EB077", text: "Connected", outline: true }) : /* @__PURE__ */ jsx45("span", { className: "text-sm text-low", children: "Not connected" });
                 },
                 header: "Status",
                 key: "status"
@@ -7487,9 +7847,9 @@ var SettingsPage = () => {
                   const canChange = provider === "github" || provider === "google";
                   if (!canChange) return null;
                   const href = `${endpoint.replace(/\/$/, "")}/connect/${provider}?return_to=${encodeURIComponent(window.location.href)}`;
-                  return /* @__PURE__ */ jsxs34(Menu7, { children: [
-                    /* @__PURE__ */ jsx43(MenuButton7, { "aria-label": `${provider} actions`, className: "rounded-[2px] p-2 text-subtle outline-none transition hover:bg-white/5 hover:text-white", children: /* @__PURE__ */ jsx43(EllipsisVerticalIcon4, { className: "size-5" }) }),
-                    /* @__PURE__ */ jsx43(MenuItems7, { portal: true, anchor: { to: "bottom end", gap: 6 }, className: "z-50 min-w-44 rounded-[2px] border border-line bg-secondary text-white shadow-xl outline-hidden", children: /* @__PURE__ */ jsx43("div", { className: "p-1.5", children: connected2 ? /* @__PURE__ */ jsx43(MenuItem7, { children: /* @__PURE__ */ jsx43("button", { type: "button", className: menuItemClassName6, onClick: () => setConfirmRemove(provider), children: "Remove" }) }) : /* @__PURE__ */ jsx43(MenuItem7, { children: /* @__PURE__ */ jsx43("a", { href, className: menuItemClassName6, children: "Connect" }) }) }) })
+                  return /* @__PURE__ */ jsxs36(Menu9, { children: [
+                    /* @__PURE__ */ jsx45(MenuButton9, { "aria-label": `${provider} actions`, className: "rounded-[2px] p-2 text-subtle outline-none transition hover:bg-white/5 hover:text-white", children: /* @__PURE__ */ jsx45(EllipsisVerticalIcon5, { className: "size-5" }) }),
+                    /* @__PURE__ */ jsx45(MenuItems9, { portal: true, anchor: { to: "bottom end", gap: 6 }, className: "z-50 min-w-44 rounded-[2px] border border-line bg-secondary text-white shadow-xl outline-hidden", children: /* @__PURE__ */ jsx45("div", { className: "p-1.5", children: connected2 ? /* @__PURE__ */ jsx45(MenuItem9, { children: /* @__PURE__ */ jsx45("button", { type: "button", className: menuItemClassName7, onClick: () => setConfirmRemove(provider), children: "Remove" }) }) : /* @__PURE__ */ jsx45(MenuItem9, { children: /* @__PURE__ */ jsx45("a", { href, className: menuItemClassName7, children: "Connect" }) }) }) })
                   ] });
                 },
                 header: "",
@@ -7500,7 +7860,7 @@ var SettingsPage = () => {
         ) : null
       ] })
     ] }),
-    /* @__PURE__ */ jsx43(
+    /* @__PURE__ */ jsx45(
       ConfirmDialog,
       {
         confirmLabel: "Remove",
@@ -7525,14 +7885,14 @@ var SettingsPage = () => {
 // src/components/BillingPage.tsx
 import { CardCvcElement, CardExpiryElement, CardNumberElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { PlusIcon as PlusIcon3 } from "@heroicons/react/24/outline";
-import { useEffect as useEffect8, useRef as useRef2, useState as useState19 } from "react";
+import { PlusIcon as PlusIcon4 } from "@heroicons/react/24/outline";
+import { useEffect as useEffect9, useRef as useRef2, useState as useState21 } from "react";
 
 // src/components/TransactionsList.tsx
-import { Menu as Menu8, MenuButton as MenuButton8, MenuItem as MenuItem8, MenuItems as MenuItems8 } from "@headlessui/react";
+import { Menu as Menu10, MenuButton as MenuButton10, MenuItem as MenuItem10, MenuItems as MenuItems10 } from "@headlessui/react";
 import { ArrowDownTrayIcon as ArrowDownTrayIcon2, MagnifyingGlassIcon as MagnifyingGlassIcon3 } from "@heroicons/react/24/outline";
-import { useState as useState18 } from "react";
-import { jsx as jsx44, jsxs as jsxs35 } from "react/jsx-runtime";
+import { useState as useState20 } from "react";
+import { jsx as jsx46, jsxs as jsxs37 } from "react/jsx-runtime";
 var typeLabels = {
   stripe_payment: { label: "Payment", colour: "#3EB077" },
   xero_invoice: { label: "Invoice", colour: "#3B82F6" },
@@ -7584,12 +7944,12 @@ var TransactionsList = ({
   canFilterClients,
   organisationUuid
 }) => {
-  const [query, setQuery] = useState18("");
-  const [client, setClient] = useState18("");
-  const [type, setType] = useState18("");
-  const [period, setPeriod] = useState18("month");
-  const [page, setPage] = useState18(1);
-  const [perPage, setPerPage] = useState18(25);
+  const [query, setQuery] = useState20("");
+  const [client, setClient] = useState20("");
+  const [type, setType] = useState20("");
+  const [period, setPeriod] = useState20("month");
+  const [page, setPage] = useState20(1);
+  const [perPage, setPerPage] = useState20(25);
   const range = periodRange(period);
   const params = new URLSearchParams({ page: String(page), perPage: String(perPage) });
   if (canFilterClients) {
@@ -7608,8 +7968,8 @@ var TransactionsList = ({
     `/api/resources/organisations/${organisationUuid}/transactions?${params.toString()}`,
     organisationUuid !== "" && (canFilterClients || appClientId !== "")
   );
-  if (result.isPending) return /* @__PURE__ */ jsx44(FullLoader, {});
-  if (result.isError || !result.data) return /* @__PURE__ */ jsx44("p", { className: "p-5 text-sm text-subtle", children: "Transactions could not be loaded." });
+  if (result.isPending) return /* @__PURE__ */ jsx46(FullLoader, {});
+  if (result.isError || !result.data) return /* @__PURE__ */ jsx46("p", { className: "p-5 text-sm text-subtle", children: "Transactions could not be loaded." });
   const exportRows = async () => {
     const collected = [];
     let nextPage = 1;
@@ -7640,19 +8000,19 @@ var TransactionsList = ({
     } while (nextPage <= lastPage);
     return collected;
   };
-  return /* @__PURE__ */ jsxs35(
+  return /* @__PURE__ */ jsxs37(
     TableContainer,
     {
       className: "min-h-0 flex-1",
       flush: true,
       title: "Transactions",
-      toolbar: /* @__PURE__ */ jsxs35(Menu8, { children: [
-        /* @__PURE__ */ jsxs35(MenuButton8, { className: "flex h-10 shrink-0 items-center gap-2 rounded-[2px] border border-grey-700t px-4 text-sm font-bold text-low-priority outline-none hover:bg-white/5", children: [
-          /* @__PURE__ */ jsx44(ArrowDownTrayIcon2, { "aria-hidden": "true", className: "size-[18px]" }),
+      toolbar: /* @__PURE__ */ jsxs37(Menu10, { children: [
+        /* @__PURE__ */ jsxs37(MenuButton10, { className: "flex h-10 shrink-0 items-center gap-2 rounded-[2px] border border-grey-700t px-4 text-sm font-bold text-low-priority outline-none hover:bg-white/5", children: [
+          /* @__PURE__ */ jsx46(ArrowDownTrayIcon2, { "aria-hidden": "true", className: "size-[18px]" }),
           "Export"
         ] }),
-        /* @__PURE__ */ jsxs35(MenuItems8, { portal: true, anchor: { to: "bottom end", gap: 6 }, className: "z-50 min-w-36 rounded-[2px] border border-line bg-secondary p-1.5 text-white shadow-xl outline-none", children: [
-          /* @__PURE__ */ jsx44(MenuItem8, { children: /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsxs37(MenuItems10, { portal: true, anchor: { to: "bottom end", gap: 6 }, className: "z-50 min-w-36 rounded-[2px] border border-line bg-secondary p-1.5 text-white shadow-xl outline-none", children: [
+          /* @__PURE__ */ jsx46(MenuItem10, { children: /* @__PURE__ */ jsx46(
             "button",
             {
               type: "button",
@@ -7663,7 +8023,7 @@ var TransactionsList = ({
               children: "CSV"
             }
           ) }),
-          /* @__PURE__ */ jsx44(MenuItem8, { children: /* @__PURE__ */ jsx44(
+          /* @__PURE__ */ jsx46(MenuItem10, { children: /* @__PURE__ */ jsx46(
             "button",
             {
               type: "button",
@@ -7682,8 +8042,8 @@ var TransactionsList = ({
         ] })
       ] }),
       children: [
-        /* @__PURE__ */ jsxs35("div", { className: "flex flex-wrap items-center justify-between gap-3 border-b border-grey-700t px-5 py-3", children: [
-          /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsxs37("div", { className: "flex flex-wrap items-center justify-between gap-3 border-b border-grey-700t px-5 py-3", children: [
+          /* @__PURE__ */ jsx46(
             Input,
             {
               name: "transactionQuery",
@@ -7697,8 +8057,8 @@ var TransactionsList = ({
               }
             }
           ),
-          /* @__PURE__ */ jsxs35("div", { className: "flex flex-wrap items-center justify-end gap-3", children: [
-            canFilterClients ? /* @__PURE__ */ jsx44(
+          /* @__PURE__ */ jsxs37("div", { className: "flex flex-wrap items-center justify-end gap-3", children: [
+            canFilterClients ? /* @__PURE__ */ jsx46(
               Select,
               {
                 placeholder: "All clients",
@@ -7714,7 +8074,7 @@ var TransactionsList = ({
                 ]
               }
             ) : null,
-            /* @__PURE__ */ jsx44(
+            /* @__PURE__ */ jsx46(
               Select,
               {
                 placeholder: "This month",
@@ -7727,7 +8087,7 @@ var TransactionsList = ({
                 options: periodOptions
               }
             ),
-            /* @__PURE__ */ jsx44(
+            /* @__PURE__ */ jsx46(
               Select,
               {
                 placeholder: "All types",
@@ -7748,7 +8108,7 @@ var TransactionsList = ({
             )
           ] })
         ] }),
-        /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsx46(
           TableColumns,
           {
             widthType: "pc",
@@ -7764,7 +8124,7 @@ var TransactionsList = ({
             ]
           }
         ),
-        result.data.items.length === 0 ? /* @__PURE__ */ jsx44("p", { className: "p-4 text-subtle", children: "No transactions yet." }) : /* @__PURE__ */ jsx44(
+        result.data.items.length === 0 ? /* @__PURE__ */ jsx46("p", { className: "p-4 text-subtle", children: "No transactions yet." }) : /* @__PURE__ */ jsx46(
           TableRows,
           {
             widthType: "pc",
@@ -7775,14 +8135,14 @@ var TransactionsList = ({
               return {
                 uuid: entry.uuid,
                 cells: [
-                  { width: 14, content: /* @__PURE__ */ jsx44("span", { className: "text-sm text-white", children: new Date(entry.createdAt).toLocaleDateString("en-GB") }) },
-                  { width: 14, content: /* @__PURE__ */ jsx44("span", { className: "truncate text-sm text-white", title: entry.title ?? "", children: entry.title ?? "-" }) },
-                  { width: 18, content: /* @__PURE__ */ jsx44("span", { className: "truncate text-sm text-white", title: entry.description ?? "", children: entry.description ?? "-" }) },
-                  { width: 14, content: /* @__PURE__ */ jsx44("span", { className: "truncate text-sm text-white", children: entry.clientId }) },
-                  { width: 10, content: /* @__PURE__ */ jsx44(Pill, { size: "small", colour: meta.colour, text: meta.label, outline: true }) },
-                  { width: 10, content: /* @__PURE__ */ jsx44("span", { className: `text-sm ${amountClass}`, children: money2(entry.net) }) },
-                  { width: 10, content: /* @__PURE__ */ jsx44("span", { className: `text-sm ${amountClass}`, children: money2(entry.vat) }) },
-                  { width: 10, content: /* @__PURE__ */ jsxs35("span", { className: `text-sm font-semibold ${amountClass}`, children: [
+                  { width: 14, content: /* @__PURE__ */ jsx46("span", { className: "text-sm text-white", children: new Date(entry.createdAt).toLocaleDateString("en-GB") }) },
+                  { width: 14, content: /* @__PURE__ */ jsx46("span", { className: "truncate text-sm text-white", title: entry.title ?? "", children: entry.title ?? "-" }) },
+                  { width: 18, content: /* @__PURE__ */ jsx46("span", { className: "truncate text-sm text-white", title: entry.description ?? "", children: entry.description ?? "-" }) },
+                  { width: 14, content: /* @__PURE__ */ jsx46("span", { className: "truncate text-sm text-white", children: entry.clientId }) },
+                  { width: 10, content: /* @__PURE__ */ jsx46(Pill, { size: "small", colour: meta.colour, text: meta.label, outline: true }) },
+                  { width: 10, content: /* @__PURE__ */ jsx46("span", { className: `text-sm ${amountClass}`, children: money2(entry.net) }) },
+                  { width: 10, content: /* @__PURE__ */ jsx46("span", { className: `text-sm ${amountClass}`, children: money2(entry.vat) }) },
+                  { width: 10, content: /* @__PURE__ */ jsxs37("span", { className: `text-sm font-semibold ${amountClass}`, children: [
                     debit ? "-" : "+",
                     money2(entry.gross)
                   ] }) }
@@ -7791,7 +8151,7 @@ var TransactionsList = ({
             })
           }
         ),
-        /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsx46(
           TablePagination,
           {
             page: result.data.pagination.page,
@@ -7810,7 +8170,7 @@ var TransactionsList = ({
 };
 
 // src/components/BillingPage.tsx
-import { jsx as jsx45, jsxs as jsxs36 } from "react/jsx-runtime";
+import { jsx as jsx47, jsxs as jsxs38 } from "react/jsx-runtime";
 var stripeElementStyle = {
   base: {
     color: "#ffffff",
@@ -7841,7 +8201,7 @@ var sectionUrl = (next) => {
   if (next === "transactions") return nested ? "/billing/transactions" : "/billing#transactions";
   return nested ? "/billing/invoices" : "/billing";
 };
-var note = (message) => /* @__PURE__ */ jsx45("p", { className: "p-5 text-sm text-subtle", children: message });
+var note = (message) => /* @__PURE__ */ jsx47("p", { className: "p-5 text-sm text-subtle", children: message });
 var CardForm = ({
   clientSecret,
   onBusyChange,
@@ -7850,7 +8210,7 @@ var CardForm = ({
 }) => {
   const stripe = useStripe();
   const elements2 = useElements();
-  const [error, setError] = useState19("");
+  const [error, setError] = useState21("");
   const save = async () => {
     if (!stripe || !elements2) return;
     const card = elements2.getElement(CardNumberElement);
@@ -7873,7 +8233,7 @@ var CardForm = ({
   };
   const saveRef = useRef2(save);
   saveRef.current = save;
-  useEffect8(() => {
+  useEffect9(() => {
     submitRef.current = () => {
       void saveRef.current();
     };
@@ -7881,22 +8241,22 @@ var CardForm = ({
       submitRef.current = null;
     };
   }, [submitRef]);
-  return /* @__PURE__ */ jsxs36("div", { className: "flex flex-col gap-4", children: [
-    /* @__PURE__ */ jsxs36("div", { children: [
-      /* @__PURE__ */ jsx45("label", { className: "mb-1.5 block text-sm text-low", children: "Card number" }),
-      /* @__PURE__ */ jsx45("div", { className: "rounded-[2px] border border-grey-700t bg-input p-3", children: /* @__PURE__ */ jsx45(CardNumberElement, { options: { style: stripeElementStyle, showIcon: true } }) })
+  return /* @__PURE__ */ jsxs38("div", { className: "flex flex-col gap-4", children: [
+    /* @__PURE__ */ jsxs38("div", { children: [
+      /* @__PURE__ */ jsx47("label", { className: "mb-1.5 block text-sm text-low", children: "Card number" }),
+      /* @__PURE__ */ jsx47("div", { className: "rounded-[2px] border border-grey-700t bg-input p-3", children: /* @__PURE__ */ jsx47(CardNumberElement, { options: { style: stripeElementStyle, showIcon: true } }) })
     ] }),
-    /* @__PURE__ */ jsxs36("div", { className: "grid grid-cols-2 gap-4", children: [
-      /* @__PURE__ */ jsxs36("div", { children: [
-        /* @__PURE__ */ jsx45("label", { className: "mb-1.5 block text-sm text-low", children: "Expiry" }),
-        /* @__PURE__ */ jsx45("div", { className: "rounded-[2px] border border-grey-700t bg-input p-3", children: /* @__PURE__ */ jsx45(CardExpiryElement, { options: { style: stripeElementStyle } }) })
+    /* @__PURE__ */ jsxs38("div", { className: "grid grid-cols-2 gap-4", children: [
+      /* @__PURE__ */ jsxs38("div", { children: [
+        /* @__PURE__ */ jsx47("label", { className: "mb-1.5 block text-sm text-low", children: "Expiry" }),
+        /* @__PURE__ */ jsx47("div", { className: "rounded-[2px] border border-grey-700t bg-input p-3", children: /* @__PURE__ */ jsx47(CardExpiryElement, { options: { style: stripeElementStyle } }) })
       ] }),
-      /* @__PURE__ */ jsxs36("div", { children: [
-        /* @__PURE__ */ jsx45("label", { className: "mb-1.5 block text-sm text-low", children: "CVC" }),
-        /* @__PURE__ */ jsx45("div", { className: "rounded-[2px] border border-grey-700t bg-input p-3", children: /* @__PURE__ */ jsx45(CardCvcElement, { options: { style: stripeElementStyle } }) })
+      /* @__PURE__ */ jsxs38("div", { children: [
+        /* @__PURE__ */ jsx47("label", { className: "mb-1.5 block text-sm text-low", children: "CVC" }),
+        /* @__PURE__ */ jsx47("div", { className: "rounded-[2px] border border-grey-700t bg-input p-3", children: /* @__PURE__ */ jsx47(CardCvcElement, { options: { style: stripeElementStyle } }) })
       ] })
     ] }),
-    error === "" ? null : /* @__PURE__ */ jsx45("p", { className: "text-sm text-red-400", children: error })
+    error === "" ? null : /* @__PURE__ */ jsx47("p", { className: "text-sm text-red-400", children: error })
   ] });
 };
 var AddCardModal = ({
@@ -7909,13 +8269,13 @@ var AddCardModal = ({
   const mutate = useSignetMutation();
   const mutateRef = useRef2(mutate);
   const onCloseRef = useRef2(onClose);
-  const [stripePromise, setStripePromise] = useState19(null);
-  const [clientSecret, setClientSecret] = useState19();
-  const [saving, setSaving] = useState19(false);
+  const [stripePromise, setStripePromise] = useState21(null);
+  const [clientSecret, setClientSecret] = useState21();
+  const [saving, setSaving] = useState21(false);
   const saveRef = useRef2(null);
   mutateRef.current = mutate;
   onCloseRef.current = onClose;
-  useEffect8(() => {
+  useEffect9(() => {
     if (!open || clientSecret) return;
     let cancelled = false;
     mutateRef.current("/api/resources/billing/stripe").then((stripe) => {
@@ -7942,13 +8302,13 @@ var AddCardModal = ({
     setClientSecret(void 0);
     onClose();
   };
-  return /* @__PURE__ */ jsx45(
+  return /* @__PURE__ */ jsx47(
     Modal,
     {
       open: open && clientSecret != null && stripePromise != null,
       onClose: close,
       title: hasCards ? "Update Payment Method" : "Add Payment Method",
-      footer: /* @__PURE__ */ jsx45(
+      footer: /* @__PURE__ */ jsx47(
         ModalFooter,
         {
           onCancel: close,
@@ -7958,7 +8318,7 @@ var AddCardModal = ({
           onPrimary: () => saveRef.current?.()
         }
       ),
-      children: clientSecret && stripePromise ? /* @__PURE__ */ jsx45(Elements, { stripe: stripePromise, options: { clientSecret }, children: /* @__PURE__ */ jsx45(
+      children: clientSecret && stripePromise ? /* @__PURE__ */ jsx47(Elements, { stripe: stripePromise, options: { clientSecret }, children: /* @__PURE__ */ jsx47(
         CardForm,
         {
           clientSecret,
@@ -7974,23 +8334,24 @@ var AddCardModal = ({
             }).catch(() => void 0).finally(() => setSaving(false));
           }
         }
-      ) }) : /* @__PURE__ */ jsx45(FullLoader, {})
+      ) }) : /* @__PURE__ */ jsx47(FullLoader, {})
     }
   );
 };
 var BillingPage = ({ BalanceComponent }) => {
   const { clientId } = useFluentConfig();
-  const { currentOrganisation, organisationUuid } = useDirectory();
+  const { currentOrganisation, organisationUuid, user } = useDirectory();
   const mutate = useSignetMutation();
   const queryClient = useQueryClient();
   const hasBalance = BalanceComponent !== void 0;
-  const [section, setSection] = useState19(() => readSection(hasBalance));
-  const [addingCard, setAddingCard] = useState19(false);
-  const canBill = currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false;
+  const [section, setSection] = useState21(() => readSection(hasBalance));
+  const [addingCard, setAddingCard] = useState21(false);
+  const tenantBilling = organisationUuid === "" && clientId === "signet" && user.claims.includes("signet.system.billing");
+  const canBill = tenantBilling || (currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false);
   const canFilterClients = clientId === "signet" && (currentOrganisation?.claims.includes("signet.organisation.billing.clients") ?? false);
-  const [invoiceClient, setInvoiceClient] = useState19("");
-  const ready = organisationUuid !== "" && canBill;
-  const invoicePath = `/api/resources/organisations/${organisationUuid}/invoices${canFilterClients ? invoiceClient === "" ? "" : `?client=${encodeURIComponent(invoiceClient)}` : `?client=${encodeURIComponent(clientId)}`}`;
+  const [invoiceClient, setInvoiceClient] = useState21("");
+  const ready = canBill && (tenantBilling || organisationUuid !== "");
+  const invoicePath = tenantBilling ? "/api/resources/tenants/current/invoices" : `/api/resources/organisations/${organisationUuid}/invoices${canFilterClients ? invoiceClient === "" ? "" : `?client=${encodeURIComponent(invoiceClient)}` : `?client=${encodeURIComponent(clientId)}`}`;
   const invoices = useSignetQuery(
     ["billing-invoices", organisationUuid, canFilterClients ? invoiceClient : clientId],
     invoicePath,
@@ -7998,10 +8359,10 @@ var BillingPage = ({ BalanceComponent }) => {
   );
   const methods = useSignetQuery(
     ["billing-payment-methods", organisationUuid],
-    `/api/resources/organisations/${organisationUuid}/payment-methods`,
+    tenantBilling ? "/api/resources/tenants/current/payment-methods" : `/api/resources/organisations/${organisationUuid}/payment-methods`,
     ready
   );
-  useEffect8(() => {
+  useEffect9(() => {
     const sync = () => setSection(readSection(hasBalance));
     window.addEventListener("hashchange", sync);
     window.addEventListener("popstate", sync);
@@ -8020,25 +8381,25 @@ var BillingPage = ({ BalanceComponent }) => {
   const payments = section === "payment-methods";
   const transactions = section === "transactions";
   const methodBody = methods.data;
-  return /* @__PURE__ */ jsxs36("section", { className: "flex min-h-0 flex-1 flex-col overflow-hidden", children: [
-    /* @__PURE__ */ jsx45(
+  return /* @__PURE__ */ jsxs38("section", { className: "flex min-h-0 flex-1 flex-col overflow-hidden", children: [
+    /* @__PURE__ */ jsx47(
       PageHeader,
       {
         title: "Billing",
-        ...payments && ready ? { button: { icon: PlusIcon3, label: "Add card", onClick: () => setAddingCard(true) } } : {}
+        ...payments && ready && !tenantBilling ? { button: { icon: PlusIcon4, label: "Add card", onClick: () => setAddingCard(true) } } : {}
       }
     ),
-    /* @__PURE__ */ jsxs36("div", { className: "flex min-h-0 flex-1 overflow-hidden", children: [
-      /* @__PURE__ */ jsxs36("aside", { "aria-label": "Billing sections", className: "flex w-52 shrink-0 flex-col gap-0.5 self-stretch border-r border-grey-700t px-3 py-4", children: [
-        /* @__PURE__ */ jsx45("button", { type: "button", className: sideNavItemClassName2(section === "invoices"), onClick: () => choose("invoices"), children: "Invoices" }),
-        /* @__PURE__ */ jsx45("button", { type: "button", className: sideNavItemClassName2(transactions), onClick: () => choose("transactions"), children: "Transactions" }),
-        BalanceComponent ? /* @__PURE__ */ jsx45("button", { type: "button", className: sideNavItemClassName2(section === "balance"), onClick: () => choose("balance"), children: "Balance" }) : null,
-        /* @__PURE__ */ jsx45("button", { type: "button", className: sideNavItemClassName2(payments), onClick: () => choose("payment-methods"), children: "Payment Methods" })
+    /* @__PURE__ */ jsxs38("div", { className: "flex min-h-0 flex-1 overflow-hidden", children: [
+      /* @__PURE__ */ jsxs38("aside", { "aria-label": "Billing sections", className: "flex w-52 shrink-0 flex-col gap-0.5 self-stretch border-r border-grey-700t px-3 py-4", children: [
+        /* @__PURE__ */ jsx47("button", { type: "button", className: sideNavItemClassName2(section === "invoices"), onClick: () => choose("invoices"), children: "Invoices" }),
+        tenantBilling ? null : /* @__PURE__ */ jsx47("button", { type: "button", className: sideNavItemClassName2(transactions), onClick: () => choose("transactions"), children: "Transactions" }),
+        BalanceComponent ? /* @__PURE__ */ jsx47("button", { type: "button", className: sideNavItemClassName2(section === "balance"), onClick: () => choose("balance"), children: "Balance" }) : null,
+        /* @__PURE__ */ jsx47("button", { type: "button", className: sideNavItemClassName2(payments), onClick: () => choose("payment-methods"), children: "Payment Methods" })
       ] }),
-      /* @__PURE__ */ jsxs36("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden", children: [
-        organisationUuid === "" ? note("Select an organisation to view billing.") : null,
+      /* @__PURE__ */ jsxs38("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden", children: [
+        organisationUuid === "" && !tenantBilling ? note("Select an organisation to view billing.") : null,
         organisationUuid !== "" && !canBill ? note("You do not have access to billing.") : null,
-        ready && section === "invoices" ? /* @__PURE__ */ jsx45(
+        ready && section === "invoices" ? /* @__PURE__ */ jsx47(
           InvoicesPanel,
           {
             client: invoiceClient,
@@ -8047,8 +8408,8 @@ var BillingPage = ({ BalanceComponent }) => {
             query: invoices
           }
         ) : null,
-        ready && section === "balance" && BalanceComponent ? /* @__PURE__ */ jsx45(BalanceComponent, {}) : null,
-        ready && transactions ? /* @__PURE__ */ jsx45(
+        ready && section === "balance" && BalanceComponent ? /* @__PURE__ */ jsx47(BalanceComponent, {}) : null,
+        ready && transactions ? /* @__PURE__ */ jsx47(
           TransactionsList,
           {
             appClientId: clientId,
@@ -8056,7 +8417,7 @@ var BillingPage = ({ BalanceComponent }) => {
             organisationUuid
           }
         ) : null,
-        ready && payments ? /* @__PURE__ */ jsx45(
+        ready && payments ? /* @__PURE__ */ jsx47(
           PaymentsPanel,
           {
             onRemove: (id) => mutate(`/api/resources/organisations/${organisationUuid}/payment-methods/${id}`, { method: "DELETE" }).then(reloadMethods),
@@ -8066,7 +8427,7 @@ var BillingPage = ({ BalanceComponent }) => {
         ) : null
       ] })
     ] }),
-    ready ? /* @__PURE__ */ jsx45(
+    ready ? /* @__PURE__ */ jsx47(
       AddCardModal,
       {
         hasCards: (methodBody?.items.length ?? 0) > 0,
@@ -8084,9 +8445,9 @@ var InvoicesPanel = ({
   onClientChange,
   query
 }) => {
-  if (query.isPending) return /* @__PURE__ */ jsx45(FullLoader, {});
+  if (query.isPending) return /* @__PURE__ */ jsx47(FullLoader, {});
   if (query.isError || !query.data) return note("Invoices could not be loaded.");
-  return /* @__PURE__ */ jsx45(
+  return /* @__PURE__ */ jsx47(
     XeroInvoicesList,
     {
       client,
@@ -8100,12 +8461,12 @@ var PaymentsPanel = ({
   onSetDefault,
   query
 }) => {
-  if (query.isPending) return /* @__PURE__ */ jsx45(FullLoader, {});
+  if (query.isPending) return /* @__PURE__ */ jsx47(FullLoader, {});
   if (query.isError || !query.data) return note("Payment methods could not be loaded.");
   if (!query.data.configured) return note("Stripe is not configured on this server.");
   if (query.data.hasCustomer === false) return note("This organisation has no Stripe customer.");
   if (query.data.unavailable) return note("Stripe could not load payment methods for this customer.");
-  return /* @__PURE__ */ jsx45(
+  return /* @__PURE__ */ jsx47(
     PaymentMethodsList,
     {
       defaultPaymentMethodId: query.data.defaultPaymentMethodId,
@@ -8179,6 +8540,8 @@ export {
   TablePagination,
   TableRows,
   TeamPage,
+  TenantPage,
+  TenantSwitcher,
   XeroInvoicesList,
   bindSignetAuth,
   clearSignetSession,
@@ -8213,6 +8576,7 @@ export {
   useQueryClient,
   useSignIn,
   useSignetMutation,
+  useSignetQuery,
   useSuspenseQuery,
   useTeam
 };
