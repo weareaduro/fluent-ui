@@ -40,3 +40,7 @@ npm run build
 ```
 
 Commit `dist/` with the source change. Consumers pick it up on the next install of this Git repository. They do not run the build.
+
+## Billing
+
+`BillingPage` lists invoices, transactions, payment methods, and an optional balance section from Signet. Invoice and transaction export builds a PDF in the browser. That compile step needs a page content security policy that allows `script-src 'wasm-unsafe-eval'` and `connect-src data:`. Signet's console policy is that exception. Column widths are derived from the header list, and a missing column is omitted rather than passed as an empty width.

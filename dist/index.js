@@ -306,6 +306,7 @@ var init_billingPdf = __esm({
       const { Text, View } = renderer;
       const styles2 = statementPdfStyles(renderer.StyleSheet);
       const widths = columnWidths(headers2);
+      const widthAt = (index) => widths[index] ?? "12%";
       const signedAt = signIndex(headers2);
       const totals = headers2.map((header, index) => {
         if (!moneyHeaders.has(header)) return null;
@@ -340,7 +341,7 @@ var init_billingPdf = __esm({
                 {
                   style: [
                     styles2.tableHeaderCell,
-                    { width: widths[index], textAlign: moneyHeaders.has(header) ? "right" : "left" }
+                    { width: widthAt(index), textAlign: moneyHeaders.has(header) ? "right" : "left" }
                   ],
                   children: header
                 },
@@ -356,7 +357,7 @@ var init_billingPdf = __esm({
                     {
                       style: [
                         money3 ? credit ? styles2.tableCellCredit : styles2.tableCell : cellIndex === 0 ? styles2.tableCellMuted : styles2.tableCell,
-                        { width: widths[cellIndex], textAlign: money3 ? "right" : "left" }
+                        { width: widthAt(cellIndex), textAlign: money3 ? "right" : "left" }
                       ],
                       children: cell
                     },
@@ -367,13 +368,13 @@ var init_billingPdf = __esm({
               showTotals ? /* @__PURE__ */ jsx19(View, { style: styles2.tableTotalRow, children: headers2.map((header, index) => {
                 const total = totals[index];
                 const explicitSign = rows.some((row) => /^[+-]/.test(row[index] ?? ""));
-                const totalText = total === null ? "" : explicitSign ? formatMoney(total) : formatMoney(total).replace(/^\+/, "");
+                const totalText = total == null ? "" : explicitSign ? formatMoney(total) : formatMoney(total).replace(/^\+/, "");
                 return /* @__PURE__ */ jsx19(
                   Text,
                   {
                     style: [
                       styles2.tableCellTotalLabel,
-                      { width: widths[index], textAlign: moneyHeaders.has(header) ? "right" : "left" }
+                      { width: widthAt(index), textAlign: moneyHeaders.has(header) ? "right" : "left" }
                     ],
                     children: index === 0 ? "Total" : totalText
                   },

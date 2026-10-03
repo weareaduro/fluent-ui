@@ -78,6 +78,7 @@ export const BillingPdfDocument = ({
   const { Text, View } = renderer;
   const styles = statementPdfStyles(renderer.StyleSheet);
   const widths = columnWidths(headers);
+  const widthAt = (index: number): string => widths[index] ?? '12%';
   const signedAt = signIndex(headers);
   const totals = headers.map((header, index) => {
     if (!moneyHeaders.has(header)) return null;
@@ -117,7 +118,7 @@ export const BillingPdfDocument = ({
                   key={header}
                   style={[
                     styles.tableHeaderCell,
-                    { width: widths[index], textAlign: moneyHeaders.has(header) ? 'right' : 'left' },
+                    { width: widthAt(index), textAlign: moneyHeaders.has(header) ? 'right' : 'left' },
                   ]}
                 >
                   {header}
@@ -138,7 +139,7 @@ export const BillingPdfDocument = ({
                         key={`${header}-${cellIndex}`}
                         style={[
                           money ? (credit ? styles.tableCellCredit : styles.tableCell) : cellIndex === 0 ? styles.tableCellMuted : styles.tableCell,
-                          { width: widths[cellIndex], textAlign: money ? 'right' : 'left' },
+                          { width: widthAt(cellIndex), textAlign: money ? 'right' : 'left' },
                         ]}
                       >
                         {cell}
@@ -154,14 +155,14 @@ export const BillingPdfDocument = ({
                   const total = totals[index];
 
                   const explicitSign = rows.some((row) => /^[+-]/.test(row[index] ?? ''));
-                  const totalText = total === null ? '' : explicitSign ? formatMoney(total) : formatMoney(total).replace(/^\+/, '');
+                  const totalText = total == null ? '' : explicitSign ? formatMoney(total) : formatMoney(total).replace(/^\+/, '');
 
                   return (
                     <Text
                       key={`total-${header}`}
                       style={[
                         styles.tableCellTotalLabel,
-                        { width: widths[index], textAlign: moneyHeaders.has(header) ? 'right' : 'left' },
+                        { width: widthAt(index), textAlign: moneyHeaders.has(header) ? 'right' : 'left' },
                       ]}
                     >
                       {index === 0 ? 'Total' : totalText}
