@@ -286,8 +286,7 @@ export const BillingPage = ({
   const [section, setSection] = useState<Section>(() => readSection(hasBalance));
   const [addingCard, setAddingCard] = useState(false);
   const tenantBilling = organisationUuid === '' && clientId === 'signet' && user.claims.includes('signet.system.billing');
-  const showSubscription =
-    SubscriptionComponent !== undefined && clientId === 'signet' && user.claims.includes('signet.system.billing');
+  const showSubscription = SubscriptionComponent !== undefined && tenantBilling;
   const canBill = tenantBilling || (currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false);
   const canFilterClients =
     clientId === 'signet' && (currentOrganisation?.claims.includes('signet.organisation.billing.clients') ?? false);
@@ -320,6 +319,13 @@ export const BillingPage = ({
       window.removeEventListener('popstate', sync);
     };
   }, [hasBalance]);
+
+  useEffect(() => {
+    if (showSubscription || section !== 'subscription') return;
+
+    setSection('invoices');
+    window.history.replaceState(null, '', sectionUrl('invoices'));
+  }, [section, showSubscription]);
 
   const choose = (next: Section) => {
     setSection(next);

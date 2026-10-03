@@ -9031,7 +9031,7 @@ var BillingPage = ({
   const [section, setSection] = useState23(() => readSection(hasBalance));
   const [addingCard, setAddingCard] = useState23(false);
   const tenantBilling = organisationUuid === "" && clientId === "signet" && user.claims.includes("signet.system.billing");
-  const showSubscription = SubscriptionComponent !== void 0 && clientId === "signet" && user.claims.includes("signet.system.billing");
+  const showSubscription = SubscriptionComponent !== void 0 && tenantBilling;
   const canBill = tenantBilling || (currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false);
   const canFilterClients = clientId === "signet" && (currentOrganisation?.claims.includes("signet.organisation.billing.clients") ?? false);
   const [invoiceClient, setInvoiceClient] = useState23("");
@@ -9060,6 +9060,11 @@ var BillingPage = ({
       window.removeEventListener("popstate", sync);
     };
   }, [hasBalance]);
+  useEffect9(() => {
+    if (showSubscription || section !== "subscription") return;
+    setSection("invoices");
+    window.history.replaceState(null, "", sectionUrl("invoices"));
+  }, [section, showSubscription]);
   const choose = (next) => {
     setSection(next);
     const url = sectionUrl(next);
