@@ -1,6 +1,7 @@
 import { ArrowRightIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { useForm } from '@tanstack/react-form';
 import { useState, type ReactElement } from 'react';
+import { performSignet, signet } from '../signet/api';
 import { completeSignetInvitation, signetClientId, signetIssuer, signInWithSignetPassword, startSignetLogin } from '../signet/session';
 import { AuthFrame, AuthTitle } from './AuthFrame';
 import { Button } from './Button';
@@ -46,13 +47,12 @@ export const RegisterPage = ({
           return;
         }
 
-        const response = await fetch(`${signetIssuer()}/oauth/register`, {
-          method: 'POST',
+        const response = await performSignet<{ access_token?: string; error?: string }>({
           credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ client_id: signetClientId(), email: value.email, password: value.password }),
+          endpoint: signetIssuer(),
+          operation: signet.register({ clientId: signetClientId(), email: value.email, password: value.password }),
         });
-        const payload = (await response.json()) as { access_token?: string; error?: string };
+        const payload = response.body;
 
         if (!response.ok || !payload.access_token) {
           setError(

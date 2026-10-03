@@ -1,5 +1,6 @@
 import { EnvelopeIcon } from '@heroicons/react/24/outline';
 import { Suspense, use, type ReactElement } from 'react';
+import { performSignet, signet } from '../signet/api';
 import { Button } from './Button';
 import { Loader } from './Loader';
 import { GitHubIcon, GoogleIcon, MicrosoftIcon, SlackIcon } from './providerIcons';
@@ -30,11 +31,15 @@ export const loadSignetProviders = async (issuer: string): Promise<string[]> => 
   if (endpoint === '') return [];
 
   try {
-    const response = await fetch(`${endpoint}/oauth/providers`, { credentials: 'include' });
+    const response = await performSignet<{ providers?: unknown }>({
+      credentials: 'include',
+      endpoint,
+      operation: signet.providers(),
+    });
 
     if (!response.ok) return [];
 
-    const body = (await response.json()) as { providers?: unknown };
+    const body = response.body;
 
     if (!Array.isArray(body.providers)) return [];
 

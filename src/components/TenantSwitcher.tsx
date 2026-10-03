@@ -2,7 +2,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { CheckIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type ReactElement } from 'react';
-import { signetJson } from '../signet/client';
+import { signet, signetJson } from '../signet/client';
 import { useFluentConfig, useSignetQuery } from '../signet/provider';
 import { Input } from './Input';
 import { Modal, ModalFooter } from './Modal';
@@ -14,7 +14,7 @@ type TenantItem = { name: string; role: string; uuid: string };
 export const TenantSwitcher = ({ collapsed = false }: { collapsed?: boolean }): ReactElement => {
   const config = useFluentConfig();
   const queryClient = useQueryClient();
-  const tenants = useSignetQuery<TenantList>(['tenants'], '/api/resources/tenants', true);
+  const tenants = useSignetQuery<TenantList>(['tenants'], signet.listTenants(), true);
   const items = tenants.data?.items ?? [];
   const current = tenants.data?.current ?? '';
   const selected = items.find((item) => item.uuid === current) ?? items[0];
@@ -33,13 +33,9 @@ export const TenantSwitcher = ({ collapsed = false }: { collapsed?: boolean }): 
 
     if (!sessionId || !tenant || !token) return;
 
-    void signetJson(config.endpoint, token, '/api/resources/tenants/select', {
-      method: 'POST',
-      body: JSON.stringify({ uuid: tenant }),
-    }).then(() => signetJson(config.endpoint, token, `/api/resources/tenants/${tenant}/subscription`, {
-      method: 'POST',
-      body: JSON.stringify({ sessionId }),
-    })).finally(() => {
+    void signetJson(config.endpoint, token, signet.selectTenant({ uuid: tenant }))
+      .then(() => signetJson(config.endpoint, token, signet.confirmTenantSubscription({ sessionId, tenantId: tenant })))
+      .finally(() => {
       window.location.replace('/');
     });
   }, [config]);
@@ -49,10 +45,7 @@ export const TenantSwitcher = ({ collapsed = false }: { collapsed?: boolean }): 
 
     if (!token) return;
 
-    void signetJson(config.endpoint, token, '/api/resources/tenants/select', {
-      method: 'POST',
-      body: JSON.stringify({ uuid }),
-    }).then(() => {
+    void signetJson(config.endpoint, token, signet.selectTenant({ uuid })).then(() => {
       void queryClient.invalidateQueries({ queryKey: ['signet'] });
       window.location.assign('/');
     });
@@ -69,23 +62,16 @@ export const TenantSwitcher = ({ collapsed = false }: { collapsed?: boolean }): 
       const created = await signetJson<{ checkoutUrl: string | null; tenant: TenantItem }>(
         config.endpoint,
         token,
-        '/api/resources/tenants',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            billingAddressLine1: line1,
-            billingCity: city,
-            billingPostcode: postcode,
-            name,
-            returnUrl: window.location.origin,
-          }),
-        },
+        signet.createTenant({
+          billingAddressLine1: line1,
+          billingCity: city,
+          billingPostcode: postcode,
+          name,
+          returnUrl: window.location.origin,
+        }),
       );
 
-      await signetJson(config.endpoint, token, '/api/resources/tenants/select', {
-        method: 'POST',
-        body: JSON.stringify({ uuid: created.tenant.uuid }),
-      });
+      await signetJson(config.endpoint, token, signet.selectTenant({ uuid: created.tenant.uuid }));
 
       if (created.checkoutUrl) {
         window.location.assign(created.checkoutUrl);

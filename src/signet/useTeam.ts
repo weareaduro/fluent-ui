@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { roleLabel } from './claims';
+import { signet } from './client';
 import { useDirectory, useFluentConfig, useSignetMutation, useSignetQuery } from './provider';
 
 export type TeamMember = {
@@ -13,30 +14,19 @@ export type TeamMember = {
 
 type RoleItem = { name: string };
 
-const withClient = (path: string, clientId: string, organisationUuid?: string): string => {
-  const url = new URL(path, 'https://signet.local');
-
-  url.searchParams.set('client', clientId);
-
-  if (organisationUuid) url.searchParams.set('organisation', organisationUuid);
-
-  return `${url.pathname}${url.search}`;
-};
-
 export const useTeam = () => {
   const { clientId, teamClaim } = useFluentConfig();
   const { organisationUuid, user } = useDirectory();
   const membership = user.organisations.find((organisation) => organisation.uuid === organisationUuid);
   const canManage = membership?.claims.includes(teamClaim) ?? false;
-  const membersPath = withClient(`/api/resources/organisations/${organisationUuid}/members`, clientId);
   const membersQuery = useSignetQuery<{ items: TeamMember[] }>(
     ['members', clientId, organisationUuid],
-    membersPath,
+    signet.listMembers({ client: clientId, organisationId: organisationUuid }),
     organisationUuid !== '' && canManage,
   );
   const rolesQuery = useSignetQuery<{ items: RoleItem[] }>(
     ['roles', clientId, organisationUuid],
-    withClient('/api/resources/roles', clientId, organisationUuid),
+    signet.listRoles({ client: clientId, organisationId: organisationUuid }),
     organisationUuid !== '' && canManage,
   );
   const mutate = useSignetMutation();
@@ -46,21 +36,13 @@ export const useTeam = () => {
   return {
     canManage,
     invite: (email: string, role: string) =>
-      mutate(membersPath, {
-        body: JSON.stringify({ client: clientId, email: email.trim(), role }),
-        method: 'POST',
-      }).then(refresh),
+      mutate(signet.addMember({ client: clientId, email: email.trim(), organisationId: organisationUuid, role })).then(refresh),
     members: membersQuery.data?.items ?? [],
     pending: membersQuery.isPending,
     remove: (userUuid: string) =>
-      mutate(withClient(`/api/resources/organisations/${organisationUuid}/members/${userUuid}`, clientId), {
-        method: 'DELETE',
-      }).then(refresh),
+      mutate(signet.removeMember({ client: clientId, organisationId: organisationUuid, userUuid })).then(refresh),
     roleOptions: (rolesQuery.data?.items ?? []).map((item) => ({ label: roleLabel(item.name), value: item.name })),
     updateRole: (userUuid: string, role: string) =>
-      mutate(withClient(`/api/resources/organisations/${organisationUuid}/members/${userUuid}`, clientId), {
-        body: JSON.stringify({ client: clientId, role }),
-        method: 'PATCH',
-      }).then(refresh),
+      mutate(signet.updateMember({ client: clientId, organisationId: organisationUuid, role, userUuid })).then(refresh),
   };
 };

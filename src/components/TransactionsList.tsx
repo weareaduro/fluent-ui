@@ -1,6 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ArrowDownTrayIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useState, type ReactElement } from 'react';
+import { signet } from '../signet/client';
 import { useDirectory, useSignetMutation, useSignetQuery } from '../signet/provider';
 import { FullLoader } from './Loader';
 import { Input } from './Input';
@@ -109,27 +110,21 @@ export const TransactionsList = ({
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
   const range = periodRange(period);
-  const params = new URLSearchParams({ page: String(page), perPage: String(perPage) });
-
-  if (canFilterClients) {
-    if (client !== '') params.set('client', client);
-  } else if (appClientId !== '') {
-    params.set('client', appClientId);
-  }
-
-  if (query.trim() !== '') params.set('query', query.trim());
-
-  if (type !== '') params.set('type', type);
-
-  if (range.from) params.set('from', range.from);
-
-  if (range.to) params.set('to', range.to);
+  const queryParams: Record<string, string | undefined> = {
+    page: String(page),
+    perPage: String(perPage),
+    ...(canFilterClients ? (client === '' ? {} : { client }) : appClientId === '' ? {} : { client: appClientId }),
+    ...(query.trim() === '' ? {} : { query: query.trim() }),
+    ...(type === '' ? {} : { type }),
+    ...(range.from ? { from: range.from } : {}),
+    ...(range.to ? { to: range.to } : {}),
+  };
 
   const { currentOrganisation } = useDirectory();
   const mutate = useSignetMutation();
   const result = useSignetQuery<TransactionResponse>(
-    ['billing-transactions', organisationUuid, params.toString()],
-    `/api/resources/organisations/${organisationUuid}/transactions?${params.toString()}`,
+    ['billing-transactions', organisationUuid, JSON.stringify(queryParams)],
+    signet.listTransactions({ organisationId: organisationUuid, query: queryParams }),
     organisationUuid !== '' && (canFilterClients || appClientId !== ''),
   );
 
@@ -143,14 +138,11 @@ export const TransactionsList = ({
     let lastPage = 1;
 
     do {
-      const exportParams = new URLSearchParams(params);
-
-      exportParams.set('page', String(nextPage));
-      exportParams.set('perPage', '100');
-
       const body = await mutate<TransactionResponse>(
-        `/api/resources/organisations/${organisationUuid}/transactions?${exportParams.toString()}`,
-        { method: 'GET' },
+        signet.listTransactions({
+          organisationId: organisationUuid,
+          query: { ...queryParams, page: String(nextPage), perPage: '100' },
+        }),
       );
 
       lastPage = body.pagination.lastPage;

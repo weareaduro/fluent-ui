@@ -1,8 +1,8 @@
 import { build } from 'esbuild';
 
 await build({
-  entryPoints: ['src/index.tsx'],
-  outfile: 'dist/index.js',
+  entryPoints: { index: 'src/index.tsx', signet: 'src/signet/api.ts' },
+  outdir: 'dist',
   bundle: true,
   format: 'esm',
   platform: 'browser',

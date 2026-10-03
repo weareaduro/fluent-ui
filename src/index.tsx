@@ -112,6 +112,8 @@ export {
 
 export { FluentProvider, useDirectory, useFluentConfig, useSignetMutation, useSignetQuery, type DirectoryOrganisation, type DirectoryUser } from './signet/provider';
 
+export { performSignet, signet, type SignetOperation, type SignetResult } from './signet/api';
+
 export { useTeam, type TeamMember } from './signet/useTeam';
 
 export { useSignIn } from './signet/useSignIn';

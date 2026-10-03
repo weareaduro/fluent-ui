@@ -2,6 +2,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type ReactElement } from 'react';
+import { performSignet, signet } from '../signet/api';
 import { displayRole, roleLabel } from '../signet/claims';
 import { useDirectory, useFluentConfig, useSignetMutation } from '../signet/provider';
 import { PageHeader } from './AppFrame';
@@ -56,13 +57,14 @@ export const SettingsPage = (): ReactElement => {
   const name = [given, family].filter((part) => part !== '').join(' ') || user.name?.trim() || user.email;
 
   useEffect(() => {
-    void fetch(`${endpoint.replace(/\/$/, '')}/oauth/providers`)
-      .then(async (response) => {
+    void performSignet<{ providers?: string[] }>({
+      credentials: 'include',
+      endpoint,
+      operation: signet.providers(),
+    }).then((response) => {
         if (!response.ok) return;
 
-        const body = (await response.json()) as { providers?: string[] };
-
-        setProviders((body.providers ?? []).filter((provider) => provider !== 'credentials'));
+        setProviders((response.body.providers ?? []).filter((provider) => provider !== 'credentials'));
       })
       .catch(() => undefined);
   }, [endpoint]);
@@ -204,7 +206,7 @@ export const SettingsPage = (): ReactElement => {
           if (!confirmRemove) return;
 
           setRemoving(true);
-          void mutate(`/oauth/connections/${confirmRemove}`, { method: 'DELETE' })
+          void mutate(signet.deleteConnection({ provider: confirmRemove }))
             .then(() => {
               setConfirmRemove(null);
               return queryClient.invalidateQueries({ queryKey: ['signet', 'directory'] });

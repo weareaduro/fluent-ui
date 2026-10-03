@@ -14,7 +14,7 @@ import {
 import { FullLoader } from '../components/Loader';
 import { NotificationsProvider, type NotificationGroup } from '../components/Notifications';
 import { managesOrganisations, organisationClaimName } from './claims';
-import { signetJson } from './client';
+import { signet, signetJson, type SignetOperation } from './client';
 import { readScopeCookie, scopeCookieName, writeScopeCookie } from './scopeCookies';
 
 const SHARED_ORGANISATION_COOKIE = 'signet-current-organisation';
@@ -123,7 +123,7 @@ const loadDirectory = async (config: FluentConfig): Promise<{ organisations: Dir
 
   if (!token) throw new Error('request_failed');
 
-  const body = await signetJson<UserinfoBody>(config.endpoint, token, '/oauth/userinfo');
+  const body = await signetJson<UserinfoBody>(config.endpoint, token, signet.userinfo());
   const memberships = (body.organisations ?? [])
     .map((row) => organisationFrom(row))
     .filter((row): row is DirectoryOrganisation => row != null);
@@ -271,7 +271,7 @@ export const useDirectory = (): DirectoryState => {
   return directory;
 };
 
-export const useSignetQuery = <T,>(key: readonly unknown[], path: string, enabled = true) => {
+export const useSignetQuery = <T,>(key: readonly unknown[], request: SignetOperation, enabled = true) => {
   const config = useFluentConfig();
 
   return useQuery({
@@ -282,7 +282,7 @@ export const useSignetQuery = <T,>(key: readonly unknown[], path: string, enable
 
       if (!token) throw new Error('request_failed');
 
-      return signetJson<T>(config.endpoint, token, path);
+      return signetJson<T>(config.endpoint, token, request);
     },
   });
 };
@@ -290,11 +290,11 @@ export const useSignetQuery = <T,>(key: readonly unknown[], path: string, enable
 export const useSignetMutation = () => {
   const config = useFluentConfig();
 
-  return async <T,>(path: string, init?: RequestInit): Promise<T> => {
+  return async <T,>(request: SignetOperation): Promise<T> => {
     const token = config.token();
 
     if (!token) throw new Error('request_failed');
 
-    return signetJson<T>(config.endpoint, token, path, init);
+    return signetJson<T>(config.endpoint, token, request);
   };
 };

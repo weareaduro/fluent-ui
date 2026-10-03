@@ -1,4 +1,5 @@
 import type { AuthMeta } from '../authMetaEnv';
+import { performSignet, signet } from './api';
 
 const TOKEN_KEY = 'signet.access_token';
 const VERIFIER_KEY = 'signet.pkce_verifier';
@@ -65,13 +66,12 @@ const redirectUri = (): string => `${window.location.origin}/login`;
 
 /** Finish an invitation on the product's register page. The membership already exists. */
 export const completeSignetInvitation = async (token: string, password: string): Promise<string> => {
-  const response = await fetch(`${signetIssuer()}/api/resources/invitations/accept`, {
-    method: 'POST',
+  const response = await performSignet<{ email?: string; error?: string }>({
     credentials: 'include',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ password, token }),
+    endpoint: signetIssuer(),
+    operation: signet.acceptInvitation({ password, token }),
   });
-  const payload = (await response.json()) as { email?: string; error?: string };
+  const payload = response.body;
 
   if (!response.ok || !payload.email) {
     throw new Error(payload.error ?? 'Invitation could not be completed');
@@ -81,18 +81,12 @@ export const completeSignetInvitation = async (token: string, password: string):
 };
 
 export const signInWithSignetPassword = async (email: string, password: string): Promise<void> => {
-  const response = await fetch(`${signetIssuer()}/oauth/token`, {
-    method: 'POST',
+  const response = await performSignet<{ access_token?: string; error?: string }>({
     credentials: 'include',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: signetClientId(),
-      grant_type: 'password',
-      password,
-      username: email,
-    }),
+    endpoint: signetIssuer(),
+    operation: signet.passwordGrant({ clientId: signetClientId(), password, username: email }),
   });
-  const payload = (await response.json()) as { access_token?: string; error?: string };
+  const payload = response.body;
 
   if (!response.ok || !payload.access_token) {
     throw new Error(payload.error ?? 'Sign-in failed');
@@ -140,19 +134,17 @@ export const completeSignetLogin = async (): Promise<boolean> => {
     throw new Error('Sign-in state did not match.');
   }
 
-  const response = await fetch(`${signetIssuer()}/oauth/token`, {
-    method: 'POST',
+  const response = await performSignet<{ access_token?: string; error?: string }>({
     credentials: 'include',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: signetClientId(),
+    endpoint: signetIssuer(),
+    operation: signet.authorizationCode({
+      clientId: signetClientId(),
       code,
-      code_verifier: verifier,
-      grant_type: 'authorization_code',
-      redirect_uri: redirectUri(),
+      codeVerifier: verifier,
+      redirectUri: redirectUri(),
     }),
   });
-  const payload = (await response.json()) as { access_token?: string; error?: string };
+  const payload = response.body;
 
   if (!response.ok || !payload.access_token) {
     throw new Error(payload.error ?? 'Sign-in failed');

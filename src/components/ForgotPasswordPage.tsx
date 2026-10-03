@@ -1,6 +1,7 @@
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { useForm } from '@tanstack/react-form';
 import { useState, type ReactElement } from 'react';
+import { performSignet, signet } from '../signet/api';
 import { signetClientId, signetIssuer } from '../signet/session';
 import { AuthFrame, AuthTitle } from './AuthFrame';
 import { Button } from './Button';
@@ -19,12 +20,11 @@ export const ForgotPasswordPage = ({ productName }: { productName: string }): Re
       setError('');
 
       try {
-        const response = await fetch(`${signetIssuer()}/oauth/forgot-password/confirm`, {
-          method: 'POST',
+        const response = await performSignet({
           credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            client_id: signetClientId(),
+          endpoint: signetIssuer(),
+          operation: signet.confirmForgotPassword({
+            clientId: signetClientId(),
             code: value.code,
             email,
             password: value.password,
@@ -57,11 +57,10 @@ export const ForgotPasswordPage = ({ productName }: { productName: string }): Re
     setError('');
 
     try {
-      const response = await fetch(`${signetIssuer()}/oauth/forgot-password`, {
-        method: 'POST',
+      const response = await performSignet({
         credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ client_id: signetClientId(), email: nextEmail }),
+        endpoint: signetIssuer(),
+        operation: signet.forgotPassword({ clientId: signetClientId(), email: nextEmail }),
       });
 
       if (!response.ok) {

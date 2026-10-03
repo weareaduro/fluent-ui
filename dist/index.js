@@ -5116,7 +5116,7 @@ var roleLabel = (role) => {
 };
 var displayRole = (membershipRole, userRole) => roleLabel(membershipRole || userRole);
 
-// src/signet/client.ts
+// src/signet/api.ts
 var SignetError = class extends Error {
   constructor(status) {
     super("request_failed");
@@ -5124,17 +5124,319 @@ var SignetError = class extends Error {
   }
   status;
 };
-var signetJson = async (endpoint, token, path, init) => {
-  const headers2 = new Headers(init?.headers);
-  headers2.set("accept", "application/json");
-  headers2.set("authorization", `Bearer ${token}`);
-  if (init?.body != null && !headers2.has("content-type")) {
-    headers2.set("content-type", "application/json");
+var originOf = (endpoint) => endpoint.replace(/\/$/, "");
+var search = (params) => {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value == null || value === "") continue;
+    if (Array.isArray(value)) {
+      for (const item of value) query.append(key, item);
+    } else {
+      query.set(key, value);
+    }
   }
-  const response = await fetch(`${endpoint.replace(/\/$/, "")}${path}`, { ...init, credentials: "include", headers: headers2 });
-  if (!response.ok) throw new SignetError(response.status);
+  const text = query.toString();
+  return text === "" ? "" : `?${text}`;
+};
+var operation = (path, extra) => ({
+  path,
+  ...extra?.method ? { method: extra.method } : {},
+  ...extra?.body !== void 0 ? { body: extra.body } : {},
+  ...extra?.form ? { form: extra.form } : {}
+});
+var signet = {
+  acceptInvitation: ({ password, token }) => operation("/api/resources/invitations/accept", { method: "POST", body: { password, token } }),
+  addMember: ({
+    client,
+    email,
+    firstName,
+    lastName,
+    organisationId,
+    role
+  }) => operation(`/api/resources/organisations/${organisationId}/members${search({ client })}`, {
+    method: "POST",
+    body: {
+      email,
+      ...client ? { client } : {},
+      ...firstName != null ? { firstName } : {},
+      ...lastName != null ? { lastName } : {},
+      ...role ? { role } : {}
+    }
+  }),
+  assignRoleClaim: ({
+    claim,
+    client,
+    role
+  }) => operation("/api/resources/role-claims", { method: "PUT", body: { claim, client, role } }),
+  authorizationCode: ({
+    clientId,
+    code,
+    codeVerifier,
+    redirectUri: redirectUri2
+  }) => operation("/oauth/token", {
+    method: "POST",
+    form: {
+      client_id: clientId,
+      code,
+      code_verifier: codeVerifier,
+      grant_type: "authorization_code",
+      redirect_uri: redirectUri2
+    }
+  }),
+  billingStripe: () => operation("/api/resources/billing/stripe"),
+  clientCredentials: ({
+    clientId,
+    clientSecret,
+    tenantId
+  }) => operation("/oauth/token", {
+    method: "POST",
+    form: {
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "client_credentials",
+      ...tenantId ? { tenant_id: tenantId } : {}
+    }
+  }),
+  confirmForgotPassword: ({
+    clientId,
+    code,
+    email,
+    password
+  }) => operation("/oauth/forgot-password/confirm", {
+    method: "POST",
+    body: { client_id: clientId, code, email, password }
+  }),
+  confirmTenantSubscription: ({
+    sessionId,
+    tenantId
+  }) => operation(`/api/resources/tenants/${tenantId}/subscription`, { method: "POST", body: { sessionId } }),
+  createOrganisation: ({ name, website }) => operation("/api/resources/organisations", {
+    method: "POST",
+    body: { name, ...website ? { website } : {} }
+  }),
+  createTenant: (body) => operation("/api/resources/tenants", { method: "POST", body }),
+  createUser: (body) => operation("/api/resources/users", { method: "POST", body }),
+  deleteConnection: ({ provider }) => operation(`/oauth/connections/${provider}`, { method: "DELETE" }),
+  deleteOrganisation: ({ organisationId }) => operation(`/api/resources/organisations/${organisationId}`, { method: "DELETE" }),
+  deletePaymentMethod: ({
+    organisationId,
+    paymentMethodId
+  }) => operation(`/api/resources/organisations/${organisationId}/payment-methods/${paymentMethodId}`, {
+    method: "DELETE"
+  }),
+  deleteUser: ({ clientId, email }) => operation("/oauth/delete", { method: "POST", body: { client_id: clientId, email } }),
+  forgotPassword: ({ clientId, email }) => operation("/oauth/forgot-password", { method: "POST", body: { client_id: clientId, email } }),
+  invoices: ({
+    client,
+    organisationId,
+    tenant
+  }) => operation(
+    tenant ? "/api/resources/tenants/current/invoices" : `/api/resources/organisations/${organisationId ?? ""}/invoices${search({ client })}`
+  ),
+  listMembers: ({
+    client,
+    organisationId
+  }) => operation(`/api/resources/organisations/${organisationId}/members${search({ client })}`),
+  listOrganisations: () => operation("/api/resources/organisations"),
+  listRoles: ({ client, organisationId }) => operation(`/api/resources/roles${search({ client, organisation: organisationId })}`),
+  listTenants: () => operation("/api/resources/tenants"),
+  listTransactions: ({
+    organisationId,
+    query
+  }) => operation(`/api/resources/organisations/${organisationId}/transactions${search(query)}`),
+  listUsers: (query) => operation(`/api/resources/users${search(query)}`),
+  logout: ({ clientId, subject }) => operation("/oauth/logout", { method: "POST", body: { client_id: clientId, subject } }),
+  organisationBalance: ({
+    client,
+    organisationId
+  }) => operation(`/api/resources/organisations/${organisationId}/transactions/balance${search({ client })}`),
+  passwordGrant: ({
+    clientId,
+    password,
+    username
+  }) => operation("/oauth/token", {
+    method: "POST",
+    form: { client_id: clientId, grant_type: "password", password, username }
+  }),
+  paymentIntent: (body) => operation("/api/resources/payment-intents", { method: "POST", body }),
+  paymentMethods: ({
+    organisationId,
+    tenant
+  }) => operation(
+    tenant ? "/api/resources/tenants/current/payment-methods" : `/api/resources/organisations/${organisationId ?? ""}/payment-methods`
+  ),
+  providerGrant: ({
+    clientId,
+    clientSecret,
+    email,
+    grantType,
+    provider,
+    subject,
+    tenantId
+  }) => operation("/oauth/token", {
+    method: "POST",
+    form: {
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: grantType,
+      provider,
+      ...email ? { email } : {},
+      ...subject ? { subject } : {},
+      ...tenantId ? { tenant_id: tenantId } : {}
+    }
+  }),
+  providers: () => operation("/oauth/providers"),
+  readMe: () => operation("/api/resources/users/me"),
+  readOrganisation: ({ organisationId }) => operation(`/api/resources/organisations/${organisationId}`),
+  readUser: ({ userUuid }) => operation(`/api/resources/users/${userUuid}`),
+  recordTransaction: ({
+    organisationId,
+    body
+  }) => operation(`/api/resources/organisations/${organisationId}/transactions`, { method: "POST", body }),
+  refreshToken: ({
+    clientId,
+    refreshToken
+  }) => operation("/oauth/token", {
+    method: "POST",
+    form: {
+      client_id: clientId,
+      grant_type: "refresh_token",
+      ...refreshToken ? { refresh_token: refreshToken } : {}
+    }
+  }),
+  register: ({
+    clientId,
+    email,
+    password
+  }) => operation("/oauth/register", { method: "POST", body: { client_id: clientId, email, password } }),
+  removeMember: ({
+    client,
+    organisationId,
+    userUuid
+  }) => operation(
+    `/api/resources/organisations/${organisationId}/members/${userUuid}${search({ client })}`,
+    { method: "DELETE" }
+  ),
+  removeRoleClaim: ({
+    claim,
+    client,
+    role
+  }) => operation("/api/resources/role-claims", { method: "DELETE", body: { claim, client, role } }),
+  resendInvitation: ({ userUuid }) => operation(`/api/resources/users/${userUuid}/invitation`, { method: "POST" }),
+  raiseInvoice: ({
+    organisationId,
+    body
+  }) => operation(`/api/resources/organisations/${organisationId}/invoices`, { method: "POST", body }),
+  selectTenant: ({ uuid }) => operation("/api/resources/tenants/select", { method: "POST", body: { uuid } }),
+  setDefaultPaymentMethod: ({
+    organisationId,
+    paymentMethodId
+  }) => operation(
+    `/api/resources/organisations/${organisationId}/payment-methods/${paymentMethodId}/default`,
+    { method: "POST" }
+  ),
+  setPassword: ({
+    clientId,
+    email,
+    password
+  }) => operation("/oauth/password", { method: "POST", body: { client_id: clientId, email, password } }),
+  setupIntent: ({ organisationId }) => operation(`/api/resources/organisations/${organisationId}/payment-methods/setup-intent`, { method: "POST" }),
+  slackBot: ({
+    clientId,
+    clientSecret,
+    tenantId
+  }) => operation("/oauth/token", {
+    method: "POST",
+    form: {
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "slack_bot",
+      ...tenantId ? { tenant_id: tenantId } : {}
+    }
+  }),
+  stripeProxy: ({
+    form,
+    method,
+    path
+  }) => operation("/api/resources/stripe", { method: "POST", body: { form, method, path } }),
+  updateBilling: ({
+    organisationId,
+    body
+  }) => operation(`/api/resources/organisations/${organisationId}/billing`, { method: "PATCH", body }),
+  updateDirectoryUser: ({
+    clientId,
+    email,
+    subject
+  }) => operation("/oauth/user", { method: "POST", body: { client_id: clientId, email, subject } }),
+  updateMe: (body) => operation("/api/resources/users/me", { method: "PATCH", body }),
+  updateMember: ({
+    client,
+    organisationId,
+    role,
+    userUuid
+  }) => operation(`/api/resources/organisations/${organisationId}/members/${userUuid}${search({ client })}`, {
+    method: "PATCH",
+    body: { ...client ? { client } : {}, role }
+  }),
+  updateOrganisation: ({
+    organisationId,
+    body
+  }) => operation(`/api/resources/organisations/${organisationId}`, { method: "PATCH", body }),
+  updateTenant: (body) => operation("/api/resources/tenants/current", { method: "PATCH", body }),
+  updateUser: ({
+    userUuid,
+    body
+  }) => operation(`/api/resources/users/${userUuid}`, { method: "PATCH", body }),
+  userinfo: () => operation("/oauth/userinfo")
+};
+var readBody = async (response) => {
   if (response.status === 204) return void 0;
-  return await response.json();
+  const text = await response.text();
+  if (text === "") return void 0;
+  return JSON.parse(text);
+};
+var performSignet = async ({
+  credentials,
+  endpoint,
+  operation: request,
+  tenantId,
+  token
+}) => {
+  const headers2 = new Headers();
+  headers2.set("accept", "application/json");
+  if (token) headers2.set("authorization", token.startsWith("Bearer ") ? token : `Bearer ${token}`);
+  if (tenantId) headers2.set("cookie", `signet-tenant=${encodeURIComponent(tenantId)}`);
+  let body;
+  if (request.form) {
+    headers2.set("content-type", "application/x-www-form-urlencoded");
+    body = new URLSearchParams(request.form);
+  } else if (request.body !== void 0) {
+    headers2.set("content-type", "application/json");
+    body = JSON.stringify(request.body);
+  }
+  const response = await fetch(`${originOf(endpoint)}${request.path}`, {
+    method: request.method ?? "GET",
+    headers: headers2,
+    ...body !== void 0 ? { body } : {},
+    ...credentials ? { credentials } : {}
+  });
+  let parsed;
+  try {
+    parsed = await readBody(response);
+  } catch {
+    parsed = {};
+  }
+  return { body: parsed, ok: response.ok, status: response.status };
+};
+var signetJson = async (endpoint, token, request) => {
+  const result = await performSignet({
+    credentials: "include",
+    endpoint,
+    operation: request,
+    token
+  });
+  if (!result.ok) throw new SignetError(result.status);
+  return result.body;
 };
 
 // src/signet/scopeCookies.ts
@@ -5195,7 +5497,7 @@ var organisationFrom = (row) => {
 var loadDirectory = async (config) => {
   const token = config.token();
   if (!token) throw new Error("request_failed");
-  const body = await signetJson(config.endpoint, token, "/oauth/userinfo");
+  const body = await signetJson(config.endpoint, token, signet.userinfo());
   const memberships = (body.organisations ?? []).map((row) => organisationFrom(row)).filter((row) => row != null);
   const user = {
     claims: body.claims ?? [],
@@ -5296,7 +5598,7 @@ var useDirectory = () => {
   if (!directory) throw new Error("FluentProvider is required");
   return directory;
 };
-var useSignetQuery = (key, path, enabled = true) => {
+var useSignetQuery = (key, request, enabled = true) => {
   const config = useFluentConfig();
   return useQuery({
     enabled,
@@ -5304,16 +5606,16 @@ var useSignetQuery = (key, path, enabled = true) => {
     queryFn: () => {
       const token = config.token();
       if (!token) throw new Error("request_failed");
-      return signetJson(config.endpoint, token, path);
+      return signetJson(config.endpoint, token, request);
     }
   });
 };
 var useSignetMutation = () => {
   const config = useFluentConfig();
-  return async (path, init) => {
+  return async (request) => {
     const token = config.token();
     if (!token) throw new Error("request_failed");
-    return signetJson(config.endpoint, token, path, init);
+    return signetJson(config.endpoint, token, request);
   };
 };
 
@@ -5998,9 +6300,13 @@ var loadSignetProviders = async (issuer) => {
   const endpoint = issuer.replace(/\/$/, "");
   if (endpoint === "") return [];
   try {
-    const response = await fetch(`${endpoint}/oauth/providers`, { credentials: "include" });
+    const response = await performSignet({
+      credentials: "include",
+      endpoint,
+      operation: signet.providers()
+    });
     if (!response.ok) return [];
-    const body = await response.json();
+    const body = response.body;
     if (!Array.isArray(body.providers)) return [];
     return body.providers.filter((provider) => typeof provider === "string");
   } catch {
@@ -6389,31 +6695,24 @@ var clearSignetSession = () => {
 };
 var redirectUri = () => `${window.location.origin}/login`;
 var completeSignetInvitation = async (token, password) => {
-  const response = await fetch(`${signetIssuer()}/api/resources/invitations/accept`, {
-    method: "POST",
+  const response = await performSignet({
     credentials: "include",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ password, token })
+    endpoint: signetIssuer(),
+    operation: signet.acceptInvitation({ password, token })
   });
-  const payload = await response.json();
+  const payload = response.body;
   if (!response.ok || !payload.email) {
     throw new Error(payload.error ?? "Invitation could not be completed");
   }
   return payload.email;
 };
 var signInWithSignetPassword = async (email, password) => {
-  const response = await fetch(`${signetIssuer()}/oauth/token`, {
-    method: "POST",
+  const response = await performSignet({
     credentials: "include",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: signetClientId(),
-      grant_type: "password",
-      password,
-      username: email
-    })
+    endpoint: signetIssuer(),
+    operation: signet.passwordGrant({ clientId: signetClientId(), password, username: email })
   });
-  const payload = await response.json();
+  const payload = response.body;
   if (!response.ok || !payload.access_token) {
     throw new Error(payload.error ?? "Sign-in failed");
   }
@@ -6449,19 +6748,17 @@ var completeSignetLogin = async () => {
     clearSignetSession();
     throw new Error("Sign-in state did not match.");
   }
-  const response = await fetch(`${signetIssuer()}/oauth/token`, {
-    method: "POST",
+  const response = await performSignet({
     credentials: "include",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: signetClientId(),
+    endpoint: signetIssuer(),
+    operation: signet.authorizationCode({
+      clientId: signetClientId(),
       code,
-      code_verifier: verifier,
-      grant_type: "authorization_code",
-      redirect_uri: redirectUri()
+      codeVerifier: verifier,
+      redirectUri: redirectUri()
     })
   });
-  const payload = await response.json();
+  const payload = response.body;
   if (!response.ok || !payload.access_token) {
     throw new Error(payload.error ?? "Sign-in failed");
   }
@@ -6565,13 +6862,12 @@ var RegisterPage = ({
           await signInWithSignetPassword(email, value.password);
           return;
         }
-        const response = await fetch(`${signetIssuer()}/oauth/register`, {
-          method: "POST",
+        const response = await performSignet({
           credentials: "include",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ client_id: signetClientId(), email: value.email, password: value.password })
+          endpoint: signetIssuer(),
+          operation: signet.register({ clientId: signetClientId(), email: value.email, password: value.password })
         });
-        const payload = await response.json();
+        const payload = response.body;
         if (!response.ok || !payload.access_token) {
           setError(
             payload.error === "already_exists" ? "An account with this email already exists" : "Could not create your account"
@@ -6730,12 +7026,11 @@ var ForgotPasswordPage = ({ productName }) => {
       setSubmitting(true);
       setError("");
       try {
-        const response = await fetch(`${signetIssuer()}/oauth/forgot-password/confirm`, {
-          method: "POST",
+        const response = await performSignet({
           credentials: "include",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            client_id: signetClientId(),
+          endpoint: signetIssuer(),
+          operation: signet.confirmForgotPassword({
+            clientId: signetClientId(),
             code: value.code,
             email,
             password: value.password
@@ -6761,11 +7056,10 @@ var ForgotPasswordPage = ({ productName }) => {
     setSubmitting(true);
     setError("");
     try {
-      const response = await fetch(`${signetIssuer()}/oauth/forgot-password`, {
-        method: "POST",
+      const response = await performSignet({
         credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ client_id: signetClientId(), email: nextEmail })
+        endpoint: signetIssuer(),
+        operation: signet.forgotPassword({ clientId: signetClientId(), email: nextEmail })
       });
       if (!response.ok) {
         setError("Could not send a reset code");
@@ -7377,7 +7671,7 @@ var OrgField = ({
   ] })
 ] });
 var TenantPage = () => {
-  const tenants = useSignetQuery(["tenants"], "/api/resources/tenants", true);
+  const tenants = useSignetQuery(["tenants"], signet.listTenants(), true);
   const currentId = tenants.data?.current ?? "";
   const record = tenants.data?.items.find((item) => item.uuid === currentId) ?? tenants.data?.items[0];
   const canManage = record?.role === "super-admin";
@@ -7462,25 +7756,22 @@ var TenantPage = () => {
             primaryDisabled: form.name.trim() === "" || saving,
             onPrimary: () => {
               setSaving(true);
-              void mutate("/api/resources/tenants/current", {
-                method: "PATCH",
-                body: JSON.stringify({
-                  billingAddressLine1: emptyToNull(form.billingAddressLine1),
-                  billingAddressLine2: emptyToNull(form.billingAddressLine2),
-                  billingCity: emptyToNull(form.billingCity),
-                  billingContactFirstName: emptyToNull(form.billingContactFirstName),
-                  billingContactLastName: emptyToNull(form.billingContactLastName),
-                  billingCountry: emptyToNull(form.billingCountry),
-                  billingCounty: emptyToNull(form.billingCounty),
-                  billingEmail: emptyToNull(form.billingEmail),
-                  billingPostcode: emptyToNull(form.billingPostcode),
-                  name: form.name.trim(),
-                  registeredCompanyName: emptyToNull(form.registeredCompanyName),
-                  registeredCompanyNumber: emptyToNull(form.registeredCompanyNumber),
-                  taxId: emptyToNull(form.taxId),
-                  website: emptyToNull(form.website)
-                })
-              }).then(() => {
+              void mutate(signet.updateTenant({
+                billingAddressLine1: emptyToNull(form.billingAddressLine1),
+                billingAddressLine2: emptyToNull(form.billingAddressLine2),
+                billingCity: emptyToNull(form.billingCity),
+                billingContactFirstName: emptyToNull(form.billingContactFirstName),
+                billingContactLastName: emptyToNull(form.billingContactLastName),
+                billingCountry: emptyToNull(form.billingCountry),
+                billingCounty: emptyToNull(form.billingCounty),
+                billingEmail: emptyToNull(form.billingEmail),
+                billingPostcode: emptyToNull(form.billingPostcode),
+                name: form.name.trim(),
+                registeredCompanyName: emptyToNull(form.registeredCompanyName),
+                registeredCompanyNumber: emptyToNull(form.registeredCompanyNumber),
+                taxId: emptyToNull(form.taxId),
+                website: emptyToNull(form.website)
+              })).then(() => {
                 setEditing(false);
                 return queryClient.invalidateQueries({ queryKey: ["signet", "tenants"] });
               }).catch(() => void 0).finally(() => setSaving(false));
@@ -7521,7 +7812,7 @@ import { Fragment as Fragment10, jsx as jsx41, jsxs as jsxs33 } from "react/jsx-
 var TenantSwitcher = ({ collapsed = false }) => {
   const config = useFluentConfig();
   const queryClient = useQueryClient();
-  const tenants = useSignetQuery(["tenants"], "/api/resources/tenants", true);
+  const tenants = useSignetQuery(["tenants"], signet.listTenants(), true);
   const items = tenants.data?.items ?? [];
   const current2 = tenants.data?.current ?? "";
   const selected = items.find((item) => item.uuid === current2) ?? items[0];
@@ -7537,23 +7828,14 @@ var TenantSwitcher = ({ collapsed = false }) => {
     const tenant = params.get("tenant");
     const token = config.token();
     if (!sessionId || !tenant || !token) return;
-    void signetJson(config.endpoint, token, "/api/resources/tenants/select", {
-      method: "POST",
-      body: JSON.stringify({ uuid: tenant })
-    }).then(() => signetJson(config.endpoint, token, `/api/resources/tenants/${tenant}/subscription`, {
-      method: "POST",
-      body: JSON.stringify({ sessionId })
-    })).finally(() => {
+    void signetJson(config.endpoint, token, signet.selectTenant({ uuid: tenant })).then(() => signetJson(config.endpoint, token, signet.confirmTenantSubscription({ sessionId, tenantId: tenant }))).finally(() => {
       window.location.replace("/");
     });
   }, [config]);
   const choose = (uuid) => {
     const token = config.token();
     if (!token) return;
-    void signetJson(config.endpoint, token, "/api/resources/tenants/select", {
-      method: "POST",
-      body: JSON.stringify({ uuid })
-    }).then(() => {
+    void signetJson(config.endpoint, token, signet.selectTenant({ uuid })).then(() => {
       void queryClient.invalidateQueries({ queryKey: ["signet"] });
       window.location.assign("/");
     });
@@ -7566,22 +7848,15 @@ var TenantSwitcher = ({ collapsed = false }) => {
       const created = await signetJson(
         config.endpoint,
         token,
-        "/api/resources/tenants",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            billingAddressLine1: line1,
-            billingCity: city,
-            billingPostcode: postcode,
-            name,
-            returnUrl: window.location.origin
-          })
-        }
+        signet.createTenant({
+          billingAddressLine1: line1,
+          billingCity: city,
+          billingPostcode: postcode,
+          name,
+          returnUrl: window.location.origin
+        })
       );
-      await signetJson(config.endpoint, token, "/api/resources/tenants/select", {
-        method: "POST",
-        body: JSON.stringify({ uuid: created.tenant.uuid })
-      });
+      await signetJson(config.endpoint, token, signet.selectTenant({ uuid: created.tenant.uuid }));
       if (created.checkoutUrl) {
         window.location.assign(created.checkoutUrl);
         return;
@@ -7761,7 +8036,7 @@ var OrganisationPage = ({ columns }) => {
   const canManage = membership?.claims.includes(organisationClaim) ?? false;
   const organisation = useSignetQuery(
     ["organisation", organisationUuid],
-    `/api/resources/organisations/${organisationUuid}`,
+    signet.readOrganisation({ organisationId: organisationUuid }),
     organisationUuid !== "" && canManage
   );
   const mutate = useSignetMutation();
@@ -7855,9 +8130,9 @@ var OrganisationPage = ({ columns }) => {
             primaryDisabled: form.name.trim() === "" || saving,
             onPrimary: () => {
               setSaving(true);
-              void mutate(`/api/resources/organisations/${organisationUuid}`, {
-                method: "PATCH",
-                body: JSON.stringify({
+              void mutate(signet.updateOrganisation({
+                organisationId: organisationUuid,
+                body: {
                   billingAddressLine1: emptyToNull2(form.billingAddressLine1),
                   billingAddressLine2: emptyToNull2(form.billingAddressLine2),
                   billingCity: emptyToNull2(form.billingCity),
@@ -7872,8 +8147,8 @@ var OrganisationPage = ({ columns }) => {
                   registeredCompanyNumber: emptyToNull2(form.registeredCompanyNumber),
                   taxId: emptyToNull2(form.taxId),
                   website: emptyToNull2(form.website)
-                })
-              }).then(() => {
+                }
+              })).then(() => {
                 setEditing(false);
                 return queryClient.invalidateQueries({ queryKey: ["signet", "organisation", organisationUuid] });
               }).catch(() => void 0).finally(() => setSaving(false));
@@ -7912,26 +8187,19 @@ import { EllipsisVerticalIcon as EllipsisVerticalIcon4, MagnifyingGlassIcon as M
 import { useState as useState20 } from "react";
 
 // src/signet/useTeam.ts
-var withClient = (path, clientId, organisationUuid) => {
-  const url = new URL(path, "https://signet.local");
-  url.searchParams.set("client", clientId);
-  if (organisationUuid) url.searchParams.set("organisation", organisationUuid);
-  return `${url.pathname}${url.search}`;
-};
 var useTeam = () => {
   const { clientId, teamClaim } = useFluentConfig();
   const { organisationUuid, user } = useDirectory();
   const membership = user.organisations.find((organisation) => organisation.uuid === organisationUuid);
   const canManage = membership?.claims.includes(teamClaim) ?? false;
-  const membersPath = withClient(`/api/resources/organisations/${organisationUuid}/members`, clientId);
   const membersQuery = useSignetQuery(
     ["members", clientId, organisationUuid],
-    membersPath,
+    signet.listMembers({ client: clientId, organisationId: organisationUuid }),
     organisationUuid !== "" && canManage
   );
   const rolesQuery = useSignetQuery(
     ["roles", clientId, organisationUuid],
-    withClient("/api/resources/roles", clientId, organisationUuid),
+    signet.listRoles({ client: clientId, organisationId: organisationUuid }),
     organisationUuid !== "" && canManage
   );
   const mutate = useSignetMutation();
@@ -7939,20 +8207,12 @@ var useTeam = () => {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["signet", "members", clientId, organisationUuid] });
   return {
     canManage,
-    invite: (email, role) => mutate(membersPath, {
-      body: JSON.stringify({ client: clientId, email: email.trim(), role }),
-      method: "POST"
-    }).then(refresh),
+    invite: (email, role) => mutate(signet.addMember({ client: clientId, email: email.trim(), organisationId: organisationUuid, role })).then(refresh),
     members: membersQuery.data?.items ?? [],
     pending: membersQuery.isPending,
-    remove: (userUuid) => mutate(withClient(`/api/resources/organisations/${organisationUuid}/members/${userUuid}`, clientId), {
-      method: "DELETE"
-    }).then(refresh),
+    remove: (userUuid) => mutate(signet.removeMember({ client: clientId, organisationId: organisationUuid, userUuid })).then(refresh),
     roleOptions: (rolesQuery.data?.items ?? []).map((item) => ({ label: roleLabel(item.name), value: item.name })),
-    updateRole: (userUuid, role) => mutate(withClient(`/api/resources/organisations/${organisationUuid}/members/${userUuid}`, clientId), {
-      body: JSON.stringify({ client: clientId, role }),
-      method: "PATCH"
-    }).then(refresh)
+    updateRole: (userUuid, role) => mutate(signet.updateMember({ client: clientId, organisationId: organisationUuid, role, userUuid })).then(refresh)
   };
 };
 
@@ -8018,9 +8278,9 @@ var TeamPage = ({
   const team = useTeam();
   const [email, setEmail] = useState20("");
   const [role, setRole] = useState20("member");
-  const [search, setSearch] = useState20("");
+  const [search2, setSearch] = useState20("");
   const [inviting, setInviting] = useState20(false);
-  const query = search.trim().toLowerCase();
+  const query = search2.trim().toLowerCase();
   const members = team.members.filter((member) => {
     if (query === "") return true;
     return member.email.toLowerCase().includes(query) || member.role.toLowerCase().includes(query);
@@ -8047,7 +8307,7 @@ var TeamPage = ({
         Icon: MagnifyingGlassIcon2,
         name: "search",
         placeholder: "Search for members",
-        value: search,
+        value: search2,
         onChange: (event) => setSearch(event.target.value)
       }
     ) }) }),
@@ -8185,10 +8445,13 @@ var SettingsPage = () => {
   const family = user.family_name?.trim() ?? "";
   const name = [given, family].filter((part) => part !== "").join(" ") || user.name?.trim() || user.email;
   useEffect8(() => {
-    void fetch(`${endpoint.replace(/\/$/, "")}/oauth/providers`).then(async (response) => {
+    void performSignet({
+      credentials: "include",
+      endpoint,
+      operation: signet.providers()
+    }).then((response) => {
       if (!response.ok) return;
-      const body = await response.json();
-      setProviders((body.providers ?? []).filter((provider) => provider !== "credentials"));
+      setProviders((response.body.providers ?? []).filter((provider) => provider !== "credentials"));
     }).catch(() => void 0);
   }, [endpoint]);
   const connected = providers.filter((provider) => user.connections.some((connection) => connection.method === provider));
@@ -8279,7 +8542,7 @@ var SettingsPage = () => {
         onConfirm: () => {
           if (!confirmRemove) return;
           setRemoving(true);
-          void mutate(`/oauth/connections/${confirmRemove}`, { method: "DELETE" }).then(() => {
+          void mutate(signet.deleteConnection({ provider: confirmRemove })).then(() => {
             setConfirmRemove(null);
             return queryClient.invalidateQueries({ queryKey: ["signet", "directory"] });
           }).catch(() => void 0).finally(() => setRemoving(false));
@@ -8358,21 +8621,20 @@ var TransactionsList = ({
   const [page, setPage] = useState22(1);
   const [perPage, setPerPage] = useState22(25);
   const range = periodRange(period);
-  const params = new URLSearchParams({ page: String(page), perPage: String(perPage) });
-  if (canFilterClients) {
-    if (client !== "") params.set("client", client);
-  } else if (appClientId !== "") {
-    params.set("client", appClientId);
-  }
-  if (query.trim() !== "") params.set("query", query.trim());
-  if (type !== "") params.set("type", type);
-  if (range.from) params.set("from", range.from);
-  if (range.to) params.set("to", range.to);
+  const queryParams = {
+    page: String(page),
+    perPage: String(perPage),
+    ...canFilterClients ? client === "" ? {} : { client } : appClientId === "" ? {} : { client: appClientId },
+    ...query.trim() === "" ? {} : { query: query.trim() },
+    ...type === "" ? {} : { type },
+    ...range.from ? { from: range.from } : {},
+    ...range.to ? { to: range.to } : {}
+  };
   const { currentOrganisation } = useDirectory();
   const mutate = useSignetMutation();
   const result = useSignetQuery(
-    ["billing-transactions", organisationUuid, params.toString()],
-    `/api/resources/organisations/${organisationUuid}/transactions?${params.toString()}`,
+    ["billing-transactions", organisationUuid, JSON.stringify(queryParams)],
+    signet.listTransactions({ organisationId: organisationUuid, query: queryParams }),
     organisationUuid !== "" && (canFilterClients || appClientId !== "")
   );
   if (result.isPending) return /* @__PURE__ */ jsx48(FullLoader, {});
@@ -8382,12 +8644,11 @@ var TransactionsList = ({
     let nextPage = 1;
     let lastPage = 1;
     do {
-      const exportParams = new URLSearchParams(params);
-      exportParams.set("page", String(nextPage));
-      exportParams.set("perPage", "100");
       const body = await mutate(
-        `/api/resources/organisations/${organisationUuid}/transactions?${exportParams.toString()}`,
-        { method: "GET" }
+        signet.listTransactions({
+          organisationId: organisationUuid,
+          query: { ...queryParams, page: String(nextPage), perPage: "100" }
+        })
       );
       lastPage = body.pagination.lastPage;
       for (const entry of body.items) {
@@ -8689,15 +8950,13 @@ var AddCardModal = ({
   useEffect9(() => {
     if (!open || clientSecret) return;
     let cancelled = false;
-    mutateRef.current("/api/resources/billing/stripe").then((stripe) => {
+    mutateRef.current(signet.billingStripe()).then((stripe) => {
       if (cancelled || stripe.publishableKey === "") {
         onCloseRef.current();
         return void 0;
       }
       setStripePromise(loadStripe(stripe.publishableKey));
-      return mutateRef.current(`/api/resources/organisations/${organisationUuid}/payment-methods/setup-intent`, {
-        method: "POST"
-      });
+      return mutateRef.current(signet.setupIntent({ organisationId: organisationUuid }));
     }).then((result) => {
       if (cancelled || !result) return;
       setClientSecret(result.clientSecret);
@@ -8736,9 +8995,7 @@ var AddCardModal = ({
           onBusyChange: setSaving,
           submitRef: saveRef,
           onSuccess: (paymentMethodId) => {
-            mutate(`/api/resources/organisations/${organisationUuid}/payment-methods/${paymentMethodId}/default`, {
-              method: "POST"
-            }).then(() => {
+            mutate(signet.setDefaultPaymentMethod({ organisationId: organisationUuid, paymentMethodId })).then(() => {
               setClientSecret(void 0);
               onClose();
               onSaved();
@@ -8766,15 +9023,19 @@ var BillingPage = ({
   const canFilterClients = clientId === "signet" && (currentOrganisation?.claims.includes("signet.organisation.billing.clients") ?? false);
   const [invoiceClient, setInvoiceClient] = useState23("");
   const ready = canBill && (tenantBilling || organisationUuid !== "");
-  const invoicePath = tenantBilling ? "/api/resources/tenants/current/invoices" : `/api/resources/organisations/${organisationUuid}/invoices${canFilterClients ? invoiceClient === "" ? "" : `?client=${encodeURIComponent(invoiceClient)}` : `?client=${encodeURIComponent(clientId)}`}`;
+  const invoiceClientFilter = tenantBilling ? void 0 : canFilterClients ? invoiceClient === "" ? void 0 : invoiceClient : clientId;
   const invoices = useSignetQuery(
     ["billing-invoices", organisationUuid, canFilterClients ? invoiceClient : clientId],
-    invoicePath,
+    signet.invoices({
+      organisationId: organisationUuid,
+      ...tenantBilling ? { tenant: true } : {},
+      ...invoiceClientFilter ? { client: invoiceClientFilter } : {}
+    }),
     ready && (canFilterClients || clientId !== "")
   );
   const methods = useSignetQuery(
     ["billing-payment-methods", organisationUuid],
-    tenantBilling ? "/api/resources/tenants/current/payment-methods" : `/api/resources/organisations/${organisationUuid}/payment-methods`,
+    signet.paymentMethods(tenantBilling ? { tenant: true } : { organisationId: organisationUuid }),
     ready
   );
   useEffect9(() => {
@@ -8837,8 +9098,8 @@ var BillingPage = ({
         ready && payments ? /* @__PURE__ */ jsx49(
           PaymentsPanel,
           {
-            onRemove: (id) => mutate(`/api/resources/organisations/${organisationUuid}/payment-methods/${id}`, { method: "DELETE" }).then(reloadMethods),
-            onSetDefault: (id) => mutate(`/api/resources/organisations/${organisationUuid}/payment-methods/${id}/default`, { method: "POST" }).then(reloadMethods),
+            onRemove: (id) => mutate(signet.deletePaymentMethod({ organisationId: organisationUuid, paymentMethodId: id })).then(reloadMethods),
+            onSetDefault: (id) => mutate(signet.setDefaultPaymentMethod({ organisationId: organisationUuid, paymentMethodId: id })).then(reloadMethods),
             query: methods
           }
         ) : null
@@ -8975,12 +9236,14 @@ export {
   loadSignetProviders,
   organisationClaimName,
   organisationFaviconUrl,
+  performSignet,
   rasterizeLogoForPdf,
   readAuthMeta,
   roleLabel,
   sidebarLabelClassName,
   signInProviderLabel,
   signInWithSignetPassword,
+  signet,
   signetAccessToken,
   signetAdministrationItems,
   signetClientId,

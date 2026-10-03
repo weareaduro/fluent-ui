@@ -3,6 +3,7 @@ import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type ComponentType, type ReactElement } from 'react';
+import { signet } from '../signet/client';
 import { useDirectory, useFluentConfig, useSignetMutation, useSignetQuery } from '../signet/provider';
 import { PageHeader } from './AppFrame';
 import { FullLoader } from './Loader';
@@ -197,7 +198,7 @@ const AddCardModal = ({
 
     let cancelled = false;
 
-    mutateRef.current<StripeConfig>('/api/resources/billing/stripe')
+    mutateRef.current<StripeConfig>(signet.billingStripe())
       .then((stripe) => {
         if (cancelled || stripe.publishableKey === '') {
           onCloseRef.current();
@@ -207,9 +208,7 @@ const AddCardModal = ({
 
         setStripePromise(loadStripe(stripe.publishableKey));
 
-        return mutateRef.current<{ clientSecret: string }>(`/api/resources/organisations/${organisationUuid}/payment-methods/setup-intent`, {
-          method: 'POST',
-        });
+        return mutateRef.current<{ clientSecret: string }>(signet.setupIntent({ organisationId: organisationUuid }));
       })
       .then((result) => {
         if (cancelled || !result) return;
@@ -254,9 +253,7 @@ const AddCardModal = ({
             onBusyChange={setSaving}
             submitRef={saveRef}
             onSuccess={(paymentMethodId) => {
-              mutate(`/api/resources/organisations/${organisationUuid}/payment-methods/${paymentMethodId}/default`, {
-                method: 'POST',
-              })
+              mutate(signet.setDefaultPaymentMethod({ organisationId: organisationUuid, paymentMethodId }))
                 .then(() => {
                   setClientSecret(undefined);
                   onClose();
@@ -296,23 +293,19 @@ export const BillingPage = ({
     clientId === 'signet' && (currentOrganisation?.claims.includes('signet.organisation.billing.clients') ?? false);
   const [invoiceClient, setInvoiceClient] = useState('');
   const ready = canBill && (tenantBilling || organisationUuid !== '');
-  const invoicePath = tenantBilling
-    ? '/api/resources/tenants/current/invoices'
-    : `/api/resources/organisations/${organisationUuid}/invoices${
-    canFilterClients
-      ? invoiceClient === ''
-        ? ''
-        : `?client=${encodeURIComponent(invoiceClient)}`
-      : `?client=${encodeURIComponent(clientId)}`
-  }`;
+  const invoiceClientFilter = tenantBilling ? undefined : canFilterClients ? (invoiceClient === '' ? undefined : invoiceClient) : clientId;
   const invoices = useSignetQuery<InvoiceResponse>(
     ['billing-invoices', organisationUuid, canFilterClients ? invoiceClient : clientId],
-    invoicePath,
+    signet.invoices({
+      organisationId: organisationUuid,
+      ...(tenantBilling ? { tenant: true } : {}),
+      ...(invoiceClientFilter ? { client: invoiceClientFilter } : {}),
+    }),
     ready && (canFilterClients || clientId !== ''),
   );
   const methods = useSignetQuery<PaymentMethodsResponse>(
     ['billing-payment-methods', organisationUuid],
-    tenantBilling ? '/api/resources/tenants/current/payment-methods' : `/api/resources/organisations/${organisationUuid}/payment-methods`,
+    signet.paymentMethods(tenantBilling ? { tenant: true } : { organisationId: organisationUuid }),
     ready,
   );
 
@@ -396,10 +389,10 @@ export const BillingPage = ({
           {ready && payments ? (
             <PaymentsPanel
               onRemove={(id) =>
-                mutate(`/api/resources/organisations/${organisationUuid}/payment-methods/${id}`, { method: 'DELETE' }).then(reloadMethods)
+                mutate(signet.deletePaymentMethod({ organisationId: organisationUuid, paymentMethodId: id })).then(reloadMethods)
               }
               onSetDefault={(id) =>
-                mutate(`/api/resources/organisations/${organisationUuid}/payment-methods/${id}/default`, { method: 'POST' }).then(reloadMethods)
+                mutate(signet.setDefaultPaymentMethod({ organisationId: organisationUuid, paymentMethodId: id })).then(reloadMethods)
               }
               query={methods}
             />

@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactElement, type ReactNode } from 'react';
+import { signet } from '../signet/client';
 import { useSignetMutation, useSignetQuery } from '../signet/provider';
 import { PageHeader } from './AppFrame';
 import { CountrySelect, countryName, countryValue } from './CountrySelect';
@@ -116,7 +117,7 @@ const OrgField = ({
 );
 
 export const TenantPage = (): ReactElement => {
-  const tenants = useSignetQuery<{ current: string | null; items: Tenant[] }>(['tenants'], '/api/resources/tenants', true);
+  const tenants = useSignetQuery<{ current: string | null; items: Tenant[] }>(['tenants'], signet.listTenants(), true);
   const currentId = tenants.data?.current ?? '';
   const record = tenants.data?.items.find((item) => item.uuid === currentId) ?? tenants.data?.items[0];
   const canManage = record?.role === 'super-admin';
@@ -235,9 +236,7 @@ export const TenantPage = (): ReactElement => {
             primaryDisabled={form.name.trim() === '' || saving}
             onPrimary={() => {
               setSaving(true);
-              void mutate('/api/resources/tenants/current', {
-                method: 'PATCH',
-                body: JSON.stringify({
+              void mutate(signet.updateTenant({
                   billingAddressLine1: emptyToNull(form.billingAddressLine1),
                   billingAddressLine2: emptyToNull(form.billingAddressLine2),
                   billingCity: emptyToNull(form.billingCity),
@@ -252,8 +251,7 @@ export const TenantPage = (): ReactElement => {
                   registeredCompanyNumber: emptyToNull(form.registeredCompanyNumber),
                   taxId: emptyToNull(form.taxId),
                   website: emptyToNull(form.website),
-                }),
-              })
+              }))
                 .then(() => {
                   setEditing(false);
                   return queryClient.invalidateQueries({ queryKey: ['signet', 'tenants'] });

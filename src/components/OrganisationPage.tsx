@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { Children, useState, type ReactElement, type ReactNode } from 'react';
+import { signet } from '../signet/client';
 import { useDirectory, useFluentConfig, useSignetMutation, useSignetQuery } from '../signet/provider';
 import { PageHeader } from './AppFrame';
 import { CountrySelect, countryName, countryValue } from './CountrySelect';
@@ -123,7 +124,7 @@ export const OrganisationPage = ({ columns }: { columns?: ReactNode }): ReactEle
   const canManage = membership?.claims.includes(organisationClaim) ?? false;
   const organisation = useSignetQuery<Organisation>(
     ['organisation', organisationUuid],
-    `/api/resources/organisations/${organisationUuid}`,
+    signet.readOrganisation({ organisationId: organisationUuid }),
     organisationUuid !== '' && canManage,
   );
   const mutate = useSignetMutation();
@@ -254,9 +255,9 @@ export const OrganisationPage = ({ columns }: { columns?: ReactNode }): ReactEle
             primaryDisabled={form.name.trim() === '' || saving}
             onPrimary={() => {
               setSaving(true);
-              void mutate(`/api/resources/organisations/${organisationUuid}`, {
-                method: 'PATCH',
-                body: JSON.stringify({
+              void mutate(signet.updateOrganisation({
+                organisationId: organisationUuid,
+                body: {
                   billingAddressLine1: emptyToNull(form.billingAddressLine1),
                   billingAddressLine2: emptyToNull(form.billingAddressLine2),
                   billingCity: emptyToNull(form.billingCity),
@@ -271,8 +272,8 @@ export const OrganisationPage = ({ columns }: { columns?: ReactNode }): ReactEle
                   registeredCompanyNumber: emptyToNull(form.registeredCompanyNumber),
                   taxId: emptyToNull(form.taxId),
                   website: emptyToNull(form.website),
-                }),
-              })
+                },
+              }))
                 .then(() => {
                   setEditing(false);
                   return queryClient.invalidateQueries({ queryKey: ['signet', 'organisation', organisationUuid] });
