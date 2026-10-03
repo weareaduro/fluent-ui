@@ -6942,7 +6942,7 @@ import {
   MapPinIcon,
   UserCircleIcon
 } from "@heroicons/react/24/outline";
-import { useState as useState14 } from "react";
+import { Children, useState as useState14 } from "react";
 import { jsx as jsx40, jsxs as jsxs31 } from "react/jsx-runtime";
 var blank = {
   billingAddressLine1: "",
@@ -6992,7 +6992,7 @@ var OrgField = ({
     /* @__PURE__ */ jsx40("span", { className: "min-w-0", children: value })
   ] })
 ] });
-var OrganisationPage = ({ aside }) => {
+var OrganisationPage = ({ columns }) => {
   const { organisationClaim } = useFluentConfig();
   const { organisationUuid, user } = useDirectory();
   const membership = user.organisations.find((organisation2) => organisation2.uuid === organisationUuid);
@@ -7035,6 +7035,7 @@ var OrganisationPage = ({ aside }) => {
   }
   const website = record?.website?.trim() ?? "";
   const websiteHref = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+  const extraColumns = Children.toArray(columns);
   return /* @__PURE__ */ jsxs31("section", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto", children: [
     /* @__PURE__ */ jsx40(PageHeader, { title: "Organisation" }),
     record ? /* @__PURE__ */ jsxs31("div", { className: "border-b border-grey-700t px-5 py-5", children: [
@@ -7057,19 +7058,25 @@ var OrganisationPage = ({ aside }) => {
         ] }) : null
       ] }) : null
     ] }) : null,
-    /* @__PURE__ */ jsxs31("div", { className: aside ? "grid grid-cols-1 lg:grid-cols-2 lg:divide-x lg:divide-grey-700t" : "", children: [
-      record ? /* @__PURE__ */ jsxs31("section", { className: "px-5 py-5", children: [
-        /* @__PURE__ */ jsx40("h3", { className: "mb-5 font-grotesque text-2xl/7 font-semibold text-white", children: "Account" }),
-        /* @__PURE__ */ jsxs31("dl", { className: "flex max-w-xl flex-col gap-5", children: [
-          /* @__PURE__ */ jsx40(OrgField, { Icon: BuildingOfficeIcon, label: "Registered company", value: record.registeredCompanyName ?? "\u2014" }),
-          /* @__PURE__ */ jsx40(OrgField, { Icon: UserCircleIcon, label: "Account manager", value: contact !== "" ? contact : "\u2014" }),
-          /* @__PURE__ */ jsx40(OrgField, { Icon: EnvelopeIcon3, label: "Billing email", value: record.billingEmail ?? "\u2014" }),
-          /* @__PURE__ */ jsx40(OrgField, { Icon: IdentificationIcon, label: "Company number", value: record.registeredCompanyNumber ?? "\u2014" }),
-          /* @__PURE__ */ jsx40(OrgField, { Icon: IdentificationIcon, label: "Tax ID / VAT", value: record.taxId ?? "\u2014" })
-        ] })
-      ] }) : organisation.isPending ? /* @__PURE__ */ jsx40(FullLoader, {}) : /* @__PURE__ */ jsx40("p", { className: "p-6 text-sm text-subtle", children: "This organisation is not available." }),
-      aside ? /* @__PURE__ */ jsx40("div", { className: "min-w-0", children: aside }) : null
-    ] }),
+    /* @__PURE__ */ jsxs31(
+      "div",
+      {
+        className: extraColumns.length > 0 ? "flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch lg:divide-x lg:divide-grey-700t" : "",
+        children: [
+          record ? /* @__PURE__ */ jsxs31("section", { className: extraColumns.length > 0 ? "flex min-w-0 flex-1 flex-col px-5 py-5" : "px-5 py-5", children: [
+            /* @__PURE__ */ jsx40("h3", { className: "mb-5 font-grotesque text-2xl/7 font-semibold text-white", children: "Account" }),
+            /* @__PURE__ */ jsxs31("dl", { className: "flex max-w-xl flex-col gap-5", children: [
+              /* @__PURE__ */ jsx40(OrgField, { Icon: BuildingOfficeIcon, label: "Registered company", value: record.registeredCompanyName ?? "\u2014" }),
+              /* @__PURE__ */ jsx40(OrgField, { Icon: UserCircleIcon, label: "Account manager", value: contact !== "" ? contact : "\u2014" }),
+              /* @__PURE__ */ jsx40(OrgField, { Icon: EnvelopeIcon3, label: "Billing email", value: record.billingEmail ?? "\u2014" }),
+              /* @__PURE__ */ jsx40(OrgField, { Icon: IdentificationIcon, label: "Company number", value: record.registeredCompanyNumber ?? "\u2014" }),
+              /* @__PURE__ */ jsx40(OrgField, { Icon: IdentificationIcon, label: "Tax ID / VAT", value: record.taxId ?? "\u2014" })
+            ] })
+          ] }) : organisation.isPending ? /* @__PURE__ */ jsx40(FullLoader, {}) : /* @__PURE__ */ jsx40("p", { className: "p-6 text-sm text-subtle", children: "This organisation is not available." }),
+          extraColumns.map((column, index) => /* @__PURE__ */ jsx40("div", { className: "flex min-w-0 flex-1 flex-col", children: column }, index))
+        ]
+      }
+    ),
     /* @__PURE__ */ jsx40(
       Modal,
       {

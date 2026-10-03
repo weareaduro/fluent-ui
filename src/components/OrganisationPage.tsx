@@ -10,7 +10,7 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactElement, type ReactNode } from 'react';
+import { Children, useState, type ReactElement, type ReactNode } from 'react';
 import { useDirectory, useFluentConfig, useSignetMutation, useSignetQuery } from '../signet/provider';
 import { PageHeader } from './AppFrame';
 import { CountrySelect, countryName, countryValue } from './CountrySelect';
@@ -116,7 +116,7 @@ const OrgField = ({
   </div>
 );
 
-export const OrganisationPage = ({ aside }: { aside?: ReactNode }): ReactElement => {
+export const OrganisationPage = ({ columns }: { columns?: ReactNode }): ReactElement => {
   const { organisationClaim } = useFluentConfig();
   const { organisationUuid, user } = useDirectory();
   const membership = user.organisations.find((organisation) => organisation.uuid === organisationUuid);
@@ -171,6 +171,7 @@ export const OrganisationPage = ({ aside }: { aside?: ReactNode }): ReactElement
 
   const website = record?.website?.trim() ?? '';
   const websiteHref = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+  const extraColumns = Children.toArray(columns);
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -213,9 +214,15 @@ export const OrganisationPage = ({ aside }: { aside?: ReactNode }): ReactElement
           ) : null}
         </div>
       ) : null}
-      <div className={aside ? 'grid grid-cols-1 lg:grid-cols-2 lg:divide-x lg:divide-grey-700t' : ''}>
+      <div
+        className={
+          extraColumns.length > 0
+            ? 'flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch lg:divide-x lg:divide-grey-700t'
+            : ''
+        }
+      >
         {record ? (
-          <section className="px-5 py-5">
+          <section className={extraColumns.length > 0 ? 'flex min-w-0 flex-1 flex-col px-5 py-5' : 'px-5 py-5'}>
             <h3 className="mb-5 font-grotesque text-2xl/7 font-semibold text-white">Account</h3>
             <dl className="flex max-w-xl flex-col gap-5">
               <OrgField Icon={BuildingOfficeIcon} label="Registered company" value={record.registeredCompanyName ?? '—'} />
@@ -228,7 +235,11 @@ export const OrganisationPage = ({ aside }: { aside?: ReactNode }): ReactElement
         ) : (
           organisation.isPending ? <FullLoader /> : <p className="p-6 text-sm text-subtle">This organisation is not available.</p>
         )}
-        {aside ? <div className="min-w-0">{aside}</div> : null}
+        {extraColumns.map((column, index) => (
+          <div key={index} className="flex min-w-0 flex-1 flex-col">
+            {column}
+          </div>
+        ))}
       </div>
       <Modal
         open={editing}
