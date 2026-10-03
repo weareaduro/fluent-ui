@@ -1,134 +1,9 @@
 import type { ReactElement } from 'react';
+import { StatementPdfFrame, statementPdfStyles } from '../pdf/statementPdf';
 
 type Renderer = typeof import('@react-pdf/renderer');
 
-const colors = {
-  primary: '#111115',
-  secondary: '#222226',
-  white: '#ffffff',
-  low: '#dddddd',
-  subtle: '#bbbbbb',
-  accent: '#d17238',
-  border: '#3a424c',
-  borderMuted: '#2c3138',
-  positive: '#3EB077',
-} as const;
-
 const moneyHeaders = new Set(['Spend', 'Tax', 'Total', 'Gross', 'Net']);
-
-const stylesFor = (StyleSheet: Renderer['StyleSheet']) => StyleSheet.create({
-  page: {
-    paddingTop: 36,
-    paddingBottom: 56,
-    paddingHorizontal: 36,
-    fontSize: 8,
-    fontFamily: 'Helvetica',
-    lineHeight: 1.4,
-    color: colors.white,
-    backgroundColor: colors.primary,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 18,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerLeft: { width: '42%' },
-  logo: { width: 124, height: 23 },
-  headerRight: { width: '48%', alignItems: 'flex-end' },
-  label: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: colors.accent,
-    marginBottom: 10,
-  },
-  metaLabel: {
-    fontSize: 7,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: colors.subtle,
-    marginBottom: 2,
-  },
-  metaValue: {
-    fontSize: 9,
-    color: colors.white,
-    marginBottom: 6,
-    textAlign: 'right',
-  },
-  sectionHeading: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    color: colors.subtle,
-    marginBottom: 8,
-  },
-  table: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 2,
-    overflow: 'hidden',
-    backgroundColor: colors.primary,
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.secondary,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingVertical: 7,
-    paddingHorizontal: 8,
-  },
-  tableHeaderCell: {
-    fontSize: 6.5,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    color: colors.subtle,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderMuted,
-  },
-  tableRowLast: {
-    flexDirection: 'row',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-  },
-  tableTotalRow: {
-    flexDirection: 'row',
-    paddingVertical: 7,
-    paddingHorizontal: 8,
-    backgroundColor: colors.secondary,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  cell: { fontSize: 7.5, color: colors.white },
-  cellMuted: { fontSize: 7.5, color: colors.low },
-  cellCredit: { fontSize: 7.5, color: colors.positive },
-  cellBold: { fontSize: 7.5, fontWeight: 'bold', color: colors.white },
-  empty: { fontSize: 8, color: colors.subtle, paddingHorizontal: 2 },
-  footer: {
-    position: 'absolute',
-    bottom: 24,
-    left: 36,
-    right: 36,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderMuted,
-    paddingTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  footerText: { fontSize: 7, color: colors.subtle },
-});
 
 export type BillingPdfProps = {
   generatedAt: Date;
@@ -200,8 +75,8 @@ export const BillingPdfDocument = ({
   rows,
   title,
 }: BillingPdfProps & { renderer: Renderer }): ReactElement => {
-  const { Document, Image, Page, Text, View } = renderer;
-  const styles = stylesFor(renderer.StyleSheet);
+  const { Text, View } = renderer;
+  const styles = statementPdfStyles(renderer.StyleSheet);
   const widths = columnWidths(headers);
   const signedAt = signIndex(headers);
   const totals = headers.map((header, index) => {
@@ -222,22 +97,15 @@ export const BillingPdfDocument = ({
   const showTotals = rows.length > 0 && totals.some((total) => total !== null);
 
   return (
-    <Document title={`${title} – ${organisationName}`}>
-      <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Image src={logoSrc} style={styles.logo} />
-          </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.label}>{title}</Text>
-            <Text style={styles.metaLabel}>Bill to</Text>
-            <Text style={styles.metaValue}>{organisationName}</Text>
-            <Text style={[styles.metaLabel, { marginTop: 4 }]}>Statement date</Text>
-            <Text style={styles.metaValue}>{formatDate(generatedAt)}</Text>
-            {periodLabel ? <Text style={[styles.metaLabel, { marginTop: 4 }]}>Period</Text> : null}
-            {periodLabel ? <Text style={styles.metaValue}>{periodLabel}</Text> : null}
-          </View>
-        </View>
+    <StatementPdfFrame
+      billTo={{ name: organisationName }}
+      documentTitle={`${title} – ${organisationName}`}
+      label={title}
+      logoSrc={logoSrc}
+      renderer={renderer}
+      statementDate={formatDate(generatedAt)}
+      {...(periodLabel ? { periodLabel } : {})}
+    >
         <Text style={styles.sectionHeading}>{title}</Text>
         {rows.length === 0 ? (
           <Text style={styles.empty}>No {title.toLowerCase()} in this export.</Text>
@@ -269,7 +137,7 @@ export const BillingPdfDocument = ({
                       <Text
                         key={`${header}-${cellIndex}`}
                         style={[
-                          money ? (credit ? styles.cellCredit : styles.cell) : cellIndex === 0 ? styles.cellMuted : styles.cell,
+                          money ? (credit ? styles.tableCellCredit : styles.tableCell) : cellIndex === 0 ? styles.tableCellMuted : styles.tableCell,
                           { width: widths[cellIndex], textAlign: money ? 'right' : 'left' },
                         ]}
                       >
@@ -292,7 +160,7 @@ export const BillingPdfDocument = ({
                     <Text
                       key={`total-${header}`}
                       style={[
-                        styles.cellBold,
+                        styles.tableCellTotalLabel,
                         { width: widths[index], textAlign: moneyHeaders.has(header) ? 'right' : 'left' },
                       ]}
                     >
@@ -304,11 +172,6 @@ export const BillingPdfDocument = ({
             ) : null}
           </View>
         )}
-        <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>Aduro Creative Ltd · Co. 11200639</Text>
-          <Text style={styles.footerText}>legal@weareaduro.com</Text>
-        </View>
-      </Page>
-    </Document>
+    </StatementPdfFrame>
   );
 };

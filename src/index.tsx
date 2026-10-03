@@ -121,3 +121,12 @@ export {
 export { MANAGE_CLAIM, MANAGE_ORGANISATION_CLAIM, MANAGE_ORGANISATION_USERS_CLAIM, MANAGE_ORGANISATIONS_CLAIM, MANAGE_TEAM_CLAIM, displayRole, organisationClaimName, roleLabel, signetAdministrationItems, signetPlatformItems, type NavItem } from './signet/claims';
 
 export { DataTable, type DataColumn } from './components/DataTable';
+
+export { rasterizeLogoForPdf } from './components/rasterizeLogoForPdf';
+
+export {
+  StatementPdfFrame,
+  statementPdfColors,
+  statementPdfStyles,
+  type StatementPdfBillTo,
+} from './pdf/statementPdf';
