@@ -1,1 +1,9 @@
-export { SignetError, performSignet, signet, signetJson, type SignetOperation, type SignetResult } from './api';
+export {
+  SignetError,
+  performSignet,
+  signet,
+  signetConnectUrl,
+  signetJson,
+  type SignetOperation,
+  type SignetResult,
+} from './api';

@@ -26,6 +26,14 @@ var operation = (path, extra) => ({
   ...extra?.body !== void 0 ? { body: extra.body } : {},
   ...extra?.form ? { form: extra.form } : {}
 });
+var signetConnectUrl = ({
+  endpoint,
+  provider,
+  returnTo
+}) => {
+  const query = returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : "";
+  return `${originOf(endpoint)}/connect/${provider}${query}`;
+};
 var signet = {
   acceptInvitation: ({ password, token }) => operation("/api/resources/invitations/accept", { method: "POST", body: { password, token } }),
   addMember: ({
@@ -93,10 +101,7 @@ var signet = {
     sessionId,
     tenantId
   }) => operation(`/api/resources/tenants/${tenantId}/subscription`, { method: "POST", body: { sessionId } }),
-  createOrganisation: ({ name, website }) => operation("/api/resources/organisations", {
-    method: "POST",
-    body: { name, ...website ? { website } : {} }
-  }),
+  createOrganisation: (body) => operation("/api/resources/organisations", { method: "POST", body }),
   createTenant: (body) => operation("/api/resources/tenants", { method: "POST", body }),
   createUser: (body) => operation("/api/resources/users", { method: "POST", body }),
   deleteIntegration: ({ provider }) => operation(`/api/resources/tenants/current/integrations/${provider}`, { method: "DELETE" }),
@@ -332,5 +337,6 @@ export {
   SignetError,
   performSignet,
   signet,
+  signetConnectUrl,
   signetJson
 };

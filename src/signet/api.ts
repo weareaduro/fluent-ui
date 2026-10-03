@@ -47,6 +47,20 @@ const operation = (
   ...(extra?.form ? { form: extra.form } : {}),
 });
 
+export const signetConnectUrl = ({
+  endpoint,
+  provider,
+  returnTo,
+}: {
+  endpoint: string;
+  provider: string;
+  returnTo?: string;
+}): string => {
+  const query = returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : '';
+
+  return `${originOf(endpoint)}/connect/${provider}${query}`;
+};
+
 export const signet = {
   acceptInvitation: ({ password, token }: { password: string; token: string }): SignetOperation =>
     operation('/api/resources/invitations/accept', { method: 'POST', body: { password, token } }),
@@ -158,11 +172,8 @@ export const signet = {
   }): SignetOperation =>
     operation(`/api/resources/tenants/${tenantId}/subscription`, { method: 'POST', body: { sessionId } }),
 
-  createOrganisation: ({ name, website }: { name: string; website?: string }): SignetOperation =>
-    operation('/api/resources/organisations', {
-      method: 'POST',
-      body: { name, ...(website ? { website } : {}) },
-    }),
+  createOrganisation: (body: { name: string } & Record<string, unknown>): SignetOperation =>
+    operation('/api/resources/organisations', { method: 'POST', body }),
 
   createTenant: (body: {
     billingAddressLine1: string;
