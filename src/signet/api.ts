@@ -111,6 +111,9 @@ export const signet = {
 
   billingStripe: (): SignetOperation => operation('/api/resources/billing/stripe'),
 
+  cancelSubscription: ({ when }: { when: 'now' | 'period_end' }): SignetOperation =>
+    operation('/api/resources/tenants/current/subscription/cancel', { method: 'POST', body: { when } }),
+
   clientCredentials: ({
     clientId,
     clientSecret,
@@ -176,6 +179,9 @@ export const signet = {
     status?: string;
   }): SignetOperation => operation('/api/resources/users', { method: 'POST', body }),
 
+  deleteIntegration: ({ provider }: { provider: string }): SignetOperation =>
+    operation(`/api/resources/tenants/current/integrations/${provider}`, { method: 'DELETE' }),
+
   deleteConnection: ({ provider }: { provider: string }): SignetOperation =>
     operation(`/oauth/connections/${provider}`, { method: 'DELETE' }),
 
@@ -227,6 +233,19 @@ export const signet = {
 
   listRoles: ({ client, organisationId }: { client: string; organisationId?: string }): SignetOperation =>
     operation(`/api/resources/roles${search({ client, organisation: organisationId })}`),
+
+  listIntegrations: (): SignetOperation => operation('/api/resources/tenants/current/integrations'),
+
+  saveIntegration: ({
+    body,
+    provider,
+  }: {
+    body: Record<string, unknown>;
+    provider: string;
+  }): SignetOperation =>
+    operation(`/api/resources/tenants/current/integrations/${provider}`, { method: 'PUT', body }),
+
+  tenantSubscription: (): SignetOperation => operation('/api/resources/tenants/current/subscription'),
 
   listTenants: (): SignetOperation => operation('/api/resources/tenants'),
 

@@ -5184,6 +5184,7 @@ var signet = {
     }
   }),
   billingStripe: () => operation("/api/resources/billing/stripe"),
+  cancelSubscription: ({ when }) => operation("/api/resources/tenants/current/subscription/cancel", { method: "POST", body: { when } }),
   clientCredentials: ({
     clientId,
     clientSecret,
@@ -5216,6 +5217,7 @@ var signet = {
   }),
   createTenant: (body) => operation("/api/resources/tenants", { method: "POST", body }),
   createUser: (body) => operation("/api/resources/users", { method: "POST", body }),
+  deleteIntegration: ({ provider }) => operation(`/api/resources/tenants/current/integrations/${provider}`, { method: "DELETE" }),
   deleteConnection: ({ provider }) => operation(`/oauth/connections/${provider}`, { method: "DELETE" }),
   deleteOrganisation: ({ organisationId }) => operation(`/api/resources/organisations/${organisationId}`, { method: "DELETE" }),
   deletePaymentMethod: ({
@@ -5239,6 +5241,12 @@ var signet = {
   }) => operation(`/api/resources/organisations/${organisationId}/members${search({ client })}`),
   listOrganisations: () => operation("/api/resources/organisations"),
   listRoles: ({ client, organisationId }) => operation(`/api/resources/roles${search({ client, organisation: organisationId })}`),
+  listIntegrations: () => operation("/api/resources/tenants/current/integrations"),
+  saveIntegration: ({
+    body,
+    provider
+  }) => operation(`/api/resources/tenants/current/integrations/${provider}`, { method: "PUT", body }),
+  tenantSubscription: () => operation("/api/resources/tenants/current/subscription"),
   listTenants: () => operation("/api/resources/tenants"),
   listTransactions: ({
     organisationId,
