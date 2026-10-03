@@ -5575,7 +5575,7 @@ var clearSignetSession = () => {
   document.cookie = `${cookie}=; Path=/; Max-Age=0; Secure; SameSite=Lax`;
   document.cookie = `${cookie}=; Path=/; Max-Age=0; Domain=.aduro.io; Secure; SameSite=Lax`;
 };
-var redirectUri = () => `${window.location.origin}/`;
+var redirectUri = () => `${window.location.origin}/login`;
 var signInWithSignetPassword = async (email, password) => {
   const response = await fetch(`${signetIssuer()}/oauth/token`, {
     method: "POST",

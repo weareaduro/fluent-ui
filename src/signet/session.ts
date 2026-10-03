@@ -61,7 +61,7 @@ export const clearSignetSession = (): void => {
   document.cookie = `${cookie}=; Path=/; Max-Age=0; Domain=.aduro.io; Secure; SameSite=Lax`;
 };
 
-const redirectUri = (): string => `${window.location.origin}/`;
+const redirectUri = (): string => `${window.location.origin}/login`;
 
 export const signInWithSignetPassword = async (email: string, password: string): Promise<void> => {
   const response = await fetch(`${signetIssuer()}/oauth/token`, {
