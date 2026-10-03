@@ -5,110 +5,66 @@ import { Input } from './Input';
 import { Pill } from './Pill';
 import { Select } from './Select';
 import { TableColumns, TableContainer, TablePagination, TableRows } from './Table';
+import { downloadCsv, downloadPdf } from './tableExport';
 
 export type XeroInvoice = {
+  clientId: string;
+  createdAt: string;
   description: string | null;
-  dueDate: string | null;
+  gross: number;
   net: number;
-  number: string | null;
-  status: string;
+  provider: 'stripe' | 'xero';
   tax: number;
-  total: number;
   url: string;
   uuid: string;
 };
 
-const statusColours: Record<string, string> = {
-  due: '#DA892B',
-  overdue: '#EF4444',
-  paid: '#3EB077',
-  upcoming: '#70808E',
-  void: '#70808E',
+const providerColours: Record<XeroInvoice['provider'], string> = {
+  stripe: '#635BFF',
+  xero: '#3B82F6',
 };
 
 const money = (amount: number): string =>
   `£${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const downloadBlob = (filename: string, blob: Blob): void => {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+const descriptionOf = (invoice: XeroInvoice): string => invoice.description ?? invoice.uuid;
 
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-};
-
-const downloadCsv = (filename: string, headers: string[], rows: string[][]): void => {
-  const escape = (value: string): string => (/[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
-  const csv = [headers, ...rows].map((row) => row.map(escape).join(',')).join('\n');
-
-  downloadBlob(filename, new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-};
-
-const downloadPdf = async (filename: string, title: string, headers: string[], rows: string[][]): Promise<void> => {
-  const { Document, Page, StyleSheet, Text, View, pdf } = await import('@react-pdf/renderer');
-  const styles = StyleSheet.create({
-    page: { padding: 28, fontSize: 8, fontFamily: 'Helvetica', color: '#111827' },
-    title: { fontSize: 14, marginBottom: 12, fontFamily: 'Helvetica-Bold' },
-    row: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E5E7EB', paddingVertical: 4 },
-    header: { fontFamily: 'Helvetica-Bold', backgroundColor: '#F3F4F6' },
-    cell: { flex: 1, paddingRight: 6 },
-  });
-  const blob = await pdf(
-    <Document>
-      <Page size="A4" orientation="landscape" style={styles.page}>
-        <Text style={styles.title}>{title}</Text>
-        <View style={[styles.row, styles.header]}>
-          {headers.map((header) => (
-            <Text key={header} style={styles.cell}>
-              {header}
-            </Text>
-          ))}
-        </View>
-        {rows.map((row, index) => (
-          <View key={`${row[0] ?? index}-${index}`} style={styles.row}>
-            {row.map((cell, cellIndex) => (
-              <Text key={`${headers[cellIndex] ?? cellIndex}`} style={styles.cell}>
-                {cell}
-              </Text>
-            ))}
-          </View>
-        ))}
-      </Page>
-    </Document>,
-  ).toBlob();
-
-  downloadBlob(filename, blob);
-};
-
-const descriptionOf = (invoice: XeroInvoice): string => invoice.description ?? invoice.number ?? invoice.uuid;
-
-export const XeroInvoicesList = ({ invoices }: { invoices: XeroInvoice[] }): ReactElement => {
+export const XeroInvoicesList = ({
+  client,
+  clients,
+  invoices,
+  onClientChange,
+}: {
+  client?: string;
+  clients?: string[];
+  invoices: XeroInvoice[];
+  onClientChange?: (client: string) => void;
+}): ReactElement => {
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
+  const [provider, setProvider] = useState('');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
   const needle = query.trim().toLowerCase();
   const filtered = invoices.filter((invoice) => {
-    const matchesQuery =
-      needle === '' ||
-      descriptionOf(invoice).toLowerCase().includes(needle) ||
-      (invoice.number?.toLowerCase().includes(needle) ?? false);
-    const matchesStatus = status === '' || invoice.status === status;
+    const matchesQuery = needle === '' || descriptionOf(invoice).toLowerCase().includes(needle);
+    const matchesProvider = provider === '' || invoice.provider === provider;
 
-    return matchesQuery && matchesStatus;
+    return matchesQuery && matchesProvider;
   });
   const start = (page - 1) * perPage;
   const visible = filtered.slice(start, start + perPage);
-  const headers = ['Due date', 'Description', 'State', 'Spend', 'Tax', 'Total'];
+  const showClient = clients !== undefined;
+  const headers = showClient
+    ? ['Date', 'Description', 'Client', 'Source', 'Gross', 'Tax', 'Net']
+    : ['Date', 'Description', 'Source', 'Gross', 'Tax', 'Net'];
   const exportRows = filtered.map((invoice) => [
-    invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : '—',
+    new Date(invoice.createdAt).toLocaleDateString('en-GB'),
     descriptionOf(invoice),
-    invoice.status,
-    money(invoice.net),
+    ...(showClient ? [invoice.clientId] : []),
+    invoice.provider === 'stripe' ? 'Stripe' : 'Xero',
+    money(invoice.gross),
     money(invoice.tax),
-    money(invoice.total),
+    money(invoice.net),
   ]);
 
   return (
@@ -155,33 +111,41 @@ export const XeroInvoicesList = ({ invoices }: { invoices: XeroInvoice[] }): Rea
             setQuery(event.target.value);
           }}
         />
+        {showClient ? (
+          <Select
+            placeholder="All clients"
+            widthClass="w-44"
+            value={client ?? ''}
+            onChange={(value) => onClientChange?.(value)}
+            options={[{ value: '', label: 'All clients' }, ...clients.map((id) => ({ value: id, label: id }))]}
+          />
+        ) : null}
         <Select
-          placeholder="All statuses"
+          placeholder="All sources"
           widthClass="w-40"
-          value={status}
+          value={provider}
           onChange={(value) => {
             setPage(1);
-            setStatus(value);
+            setProvider(value);
           }}
           options={[
-            { value: '', label: 'All statuses' },
-            { value: 'upcoming', label: 'Upcoming' },
-            { value: 'due', label: 'Due' },
-            { value: 'overdue', label: 'Overdue' },
-            { value: 'paid', label: 'Paid' },
+            { value: '', label: 'All sources' },
+            { value: 'xero', label: 'Xero' },
+            { value: 'stripe', label: 'Stripe' },
           ]}
         />
       </div>
       <TableColumns
         widthType="pc"
         columns={[
-          { width: 14, heading: 'Due date' },
-          { width: 30, heading: 'Description' },
-          { width: 12, heading: 'State' },
-          { width: 12, heading: 'Spend' },
+          { width: showClient ? 12 : 14, heading: 'Date' },
+          { width: showClient ? 20 : 26, heading: 'Description' },
+          ...(showClient ? [{ width: 12, heading: 'Client' }] : []),
+          { width: 12, heading: 'Source' },
+          { width: 12, heading: 'Gross' },
           { width: 12, heading: 'Tax' },
-          { width: 12, heading: 'Total' },
-          { width: 8 },
+          { width: 12, heading: 'Net' },
+          { width: 12 },
         ]}
       />
       {visible.length === 0 ? (
@@ -192,24 +156,25 @@ export const XeroInvoicesList = ({ invoices }: { invoices: XeroInvoice[] }): Rea
           rows={visible.map((invoice) => ({
             uuid: invoice.uuid,
             cells: [
-              { width: 14, content: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : '—' },
-              { width: 30, content: descriptionOf(invoice) },
+              { width: showClient ? 12 : 14, content: new Date(invoice.createdAt).toLocaleDateString('en-GB') },
+              { width: showClient ? 20 : 26, content: descriptionOf(invoice) },
+              ...(showClient ? [{ width: 12, content: invoice.clientId }] : []),
               {
                 width: 12,
                 content: (
                   <Pill
                     size="small"
-                    colour={statusColours[invoice.status] ?? '#70808E'}
-                    text={invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                    colour={providerColours[invoice.provider]}
+                    text={invoice.provider === 'stripe' ? 'Stripe' : 'Xero'}
                     outline
                   />
                 ),
               },
-              { width: 12, content: money(invoice.net) },
+              { width: 12, content: money(invoice.gross) },
               { width: 12, content: money(invoice.tax) },
-              { width: 12, content: money(invoice.total) },
+              { width: 12, content: money(invoice.net) },
               {
-                width: 8,
+                width: 12,
                 wrapperClassname: 'justify-end',
                 content: (
                   <a aria-label="Open invoice" className="text-subtle hover:text-white" href={invoice.url} rel="noreferrer" target="_blank">

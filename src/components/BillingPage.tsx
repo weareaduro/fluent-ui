@@ -2,19 +2,19 @@ import { CardCvcElement, CardExpiryElement, CardNumberElement, Elements, useElem
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ComponentType, type ReactElement } from 'react';
 import { useDirectory, useFluentConfig, useSignetMutation, useSignetQuery } from '../signet/provider';
 import { PageHeader } from './AppFrame';
 import { FullLoader } from './Loader';
 import { Modal, ModalFooter } from './Modal';
 import { PaymentMethodsList, type PaymentMethodCard } from './PaymentMethodsList';
+import { TransactionsList } from './TransactionsList';
 import { XeroInvoicesList, type XeroInvoice } from './XeroInvoicesList';
 
-type Section = 'invoices' | 'payment-methods';
+type Section = 'balance' | 'invoices' | 'payment-methods' | 'transactions';
 
 type InvoiceResponse = {
-  configured: boolean;
-  hasCustomer?: boolean;
+  clients?: string[];
   items: XeroInvoice[];
 };
 
@@ -41,9 +41,17 @@ const stripeElementStyle = {
 const sideNavItemClassName = (active: boolean): string =>
   ['w-full rounded-[2px] px-3 py-2 text-left text-sm font-semibold outline-none transition', active ? 'bg-orange-100/10 text-orange-100' : 'text-low hover:bg-white/5 hover:text-white'].join(' ');
 
-const readSection = (): Section => {
+const readSection = (hasBalance: boolean): Section => {
+  if (hasBalance && (window.location.hash === '#balance' || window.location.pathname.endsWith('/balance'))) {
+    return 'balance';
+  }
+
   if (window.location.hash === '#payment-methods' || window.location.pathname.endsWith('/payment-methods')) {
     return 'payment-methods';
+  }
+
+  if (window.location.hash === '#transactions' || window.location.pathname.endsWith('/transactions')) {
+    return 'transactions';
   }
 
   return 'invoices';
@@ -51,12 +59,19 @@ const readSection = (): Section => {
 
 const sectionUrl = (next: Section): string => {
   const path = window.location.pathname;
+  const nested =
+    path === '/billing/balance' ||
+    path === '/billing/invoices' ||
+    path === '/billing/payment-methods' ||
+    path === '/billing/transactions';
 
-  if (path === '/billing/invoices' || path === '/billing/payment-methods') {
-    return next === 'payment-methods' ? '/billing/payment-methods' : '/billing/invoices';
-  }
+  if (next === 'balance') return nested ? '/billing/balance' : '/billing#balance';
 
-  return next === 'payment-methods' ? '/billing#payment-methods' : '/billing';
+  if (next === 'payment-methods') return nested ? '/billing/payment-methods' : '/billing#payment-methods';
+
+  if (next === 'transactions') return nested ? '/billing/transactions' : '/billing#transactions';
+
+  return nested ? '/billing/invoices' : '/billing';
 };
 
 const note = (message: string): ReactElement => <p className="p-5 text-sm text-subtle">{message}</p>;
@@ -253,19 +268,30 @@ const AddCardModal = ({
   );
 };
 
-export const BillingPage = (): ReactElement => {
+export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: ComponentType }): ReactElement => {
   const { clientId } = useFluentConfig();
   const { currentOrganisation, organisationUuid } = useDirectory();
   const mutate = useSignetMutation();
   const queryClient = useQueryClient();
-  const [section, setSection] = useState<Section>(readSection);
+  const hasBalance = BalanceComponent !== undefined;
+  const [section, setSection] = useState<Section>(() => readSection(hasBalance));
   const [addingCard, setAddingCard] = useState(false);
   const canBill = currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false;
+  const canFilterClients =
+    clientId === 'signet' && (currentOrganisation?.claims.includes('signet.organisation.billing.clients') ?? false);
+  const [invoiceClient, setInvoiceClient] = useState('');
   const ready = organisationUuid !== '' && canBill;
+  const invoicePath = `/api/resources/organisations/${organisationUuid}/invoices${
+    canFilterClients
+      ? invoiceClient === ''
+        ? ''
+        : `?client=${encodeURIComponent(invoiceClient)}`
+      : `?client=${encodeURIComponent(clientId)}`
+  }`;
   const invoices = useSignetQuery<InvoiceResponse>(
-    ['billing-invoices', organisationUuid],
-    `/api/resources/organisations/${organisationUuid}/invoices`,
-    ready,
+    ['billing-invoices', organisationUuid, canFilterClients ? invoiceClient : clientId],
+    invoicePath,
+    ready && (canFilterClients || clientId !== ''),
   );
   const methods = useSignetQuery<PaymentMethodsResponse>(
     ['billing-payment-methods', organisationUuid],
@@ -274,7 +300,7 @@ export const BillingPage = (): ReactElement => {
   );
 
   useEffect(() => {
-    const sync = () => setSection(readSection());
+    const sync = () => setSection(readSection(hasBalance));
 
     window.addEventListener('hashchange', sync);
     window.addEventListener('popstate', sync);
@@ -283,7 +309,7 @@ export const BillingPage = (): ReactElement => {
       window.removeEventListener('hashchange', sync);
       window.removeEventListener('popstate', sync);
     };
-  }, []);
+  }, [hasBalance]);
 
   const choose = (next: Section) => {
     setSection(next);
@@ -297,6 +323,7 @@ export const BillingPage = (): ReactElement => {
   const reloadMethods = () => queryClient.invalidateQueries({ queryKey: ['signet', 'billing-payment-methods', organisationUuid] });
 
   const payments = section === 'payment-methods';
+  const transactions = section === 'transactions';
   const methodBody = methods.data;
 
   return (
@@ -310,6 +337,14 @@ export const BillingPage = (): ReactElement => {
           <button type="button" className={sideNavItemClassName(section === 'invoices')} onClick={() => choose('invoices')}>
             Invoices
           </button>
+          <button type="button" className={sideNavItemClassName(transactions)} onClick={() => choose('transactions')}>
+            Transactions
+          </button>
+          {BalanceComponent ? (
+            <button type="button" className={sideNavItemClassName(section === 'balance')} onClick={() => choose('balance')}>
+              Balance
+            </button>
+          ) : null}
           <button type="button" className={sideNavItemClassName(payments)} onClick={() => choose('payment-methods')}>
             Payment Methods
           </button>
@@ -317,7 +352,22 @@ export const BillingPage = (): ReactElement => {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {organisationUuid === '' ? note('Select an organisation to view billing.') : null}
           {organisationUuid !== '' && !canBill ? note('You do not have access to billing.') : null}
-          {ready && !payments ? <InvoicesPanel query={invoices} /> : null}
+          {ready && section === 'invoices' ? (
+            <InvoicesPanel
+              client={invoiceClient}
+              clients={canFilterClients ? invoices.data?.clients : undefined}
+              onClientChange={(value) => setInvoiceClient(value)}
+              query={invoices}
+            />
+          ) : null}
+          {ready && section === 'balance' && BalanceComponent ? <BalanceComponent /> : null}
+          {ready && transactions ? (
+            <TransactionsList
+              appClientId={clientId}
+              canFilterClients={canFilterClients}
+              organisationUuid={organisationUuid}
+            />
+          ) : null}
           {ready && payments ? (
             <PaymentsPanel
               onRemove={(id) =>
@@ -344,16 +394,28 @@ export const BillingPage = (): ReactElement => {
   );
 };
 
-const InvoicesPanel = ({ query }: { query: ReturnType<typeof useSignetQuery<InvoiceResponse>> }): ReactElement => {
+const InvoicesPanel = ({
+  client,
+  clients,
+  onClientChange,
+  query,
+}: {
+  client: string;
+  clients: string[] | undefined;
+  onClientChange: (client: string) => void;
+  query: ReturnType<typeof useSignetQuery<InvoiceResponse>>;
+}): ReactElement => {
   if (query.isPending) return <FullLoader />;
 
   if (query.isError || !query.data) return note('Invoices could not be loaded.');
 
-  if (!query.data.configured) return note('Xero is not configured on this server.');
-
-  if (query.data.hasCustomer === false) return note('This organisation has no Xero contact.');
-
-  return <XeroInvoicesList invoices={query.data.items} />;
+  return (
+    <XeroInvoicesList
+      client={client}
+      {...(clients ? { clients, onClientChange } : {})}
+      invoices={query.data.items}
+    />
+  );
 };
 
 const PaymentsPanel = ({
