@@ -285,7 +285,7 @@ export const BillingPage = ({
   const hasBalance = BalanceComponent !== undefined;
   const [section, setSection] = useState<Section>(() => readSection(hasBalance));
   const [addingCard, setAddingCard] = useState(false);
-  const tenantBilling = organisationUuid === '' && clientId === 'signet' && user.claims.includes('signet.system.billing');
+  const tenantBilling = organisationUuid === '' && clientId === 'signet' && user.claims.includes('signet.tenant.billing');
   const showSubscription = SubscriptionComponent !== undefined && tenantBilling;
   const canBill = tenantBilling || (currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false);
   const canFilterClients =

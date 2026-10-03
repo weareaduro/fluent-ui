@@ -120,7 +120,7 @@ export const TenantPage = (): ReactElement => {
   const tenants = useSignetQuery<{ current: string | null; items: Tenant[] }>(['tenants'], signet.listTenants(), true);
   const currentId = tenants.data?.current ?? '';
   const record = tenants.data?.items.find((item) => item.uuid === currentId) ?? tenants.data?.items[0];
-  const canManage = record?.role === 'super-admin';
+  const canManage = record?.role === 'tenant-manager' || record?.role === 'super-admin';
   const mutate = useSignetMutation();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);

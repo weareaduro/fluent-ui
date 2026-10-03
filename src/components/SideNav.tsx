@@ -3,6 +3,7 @@ import {
   ArrowLeftStartOnRectangleIcon,
   ChevronDownIcon,
   Cog6ToothIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from '@tanstack/react-router';
 import { useState, type ReactElement, type ReactNode } from 'react';
@@ -106,22 +107,18 @@ export const SideNav = ({
         </div>
         {preSwitcher ? <div className="shrink-0 px-3 pb-2">{preSwitcher}</div> : null}
         {showSwitcher && !collapsed ? (
-          <div className="px-3 pb-3">
-            <Menu>
+          <div className="flex items-center gap-1 px-3 pb-3">
+            <Menu as="div" className="min-w-0 flex-1">
               <MenuButton aria-label="Switch organisation" className="flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10">
-                <OrganisationAvatar name={currentOrganisation?.name ?? 'No organisation'} {...(currentOrganisation?.website ? { website: currentOrganisation.website } : {})} />
-                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{currentOrganisation?.name ?? 'No organisation'}</span>
+                {currentOrganisation ? (
+                  <OrganisationAvatar name={currentOrganisation.name} {...(currentOrganisation.website ? { website: currentOrganisation.website } : {})} />
+                ) : null}
+                <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${currentOrganisation ? 'text-white' : 'text-subtle'}`}>
+                  {currentOrganisation?.name ?? 'Please select...'}
+                </span>
                 <ChevronDownIcon className="size-4 shrink-0 text-subtle" />
               </MenuButton>
               <MenuItems portal anchor={{ to: 'bottom start', gap: 6 }} className="z-50 flex min-w-56 flex-col rounded-[2px] border border-line bg-secondary p-1.5 text-white shadow-xl outline-none">
-                {canClearOrganisation ? (
-                  <MenuItem>
-                    <button type="button" className={menuItemClassName} onClick={() => setOrganisationUuid('')}>
-                      <OrganisationAvatar name="No organisation" />
-                      <span className="min-w-0 flex-1 truncate">No organisation</span>
-                    </button>
-                  </MenuItem>
-                ) : null}
                 {organisations.map((organisation) => (
                   <MenuItem key={organisation.uuid}>
                     <button type="button" className={menuItemClassName} onClick={() => setOrganisationUuid(organisation.uuid)}>
@@ -132,6 +129,16 @@ export const SideNav = ({
                 ))}
               </MenuItems>
             </Menu>
+            {currentOrganisation && canClearOrganisation ? (
+              <button
+                aria-label="Clear organisation"
+                className="rounded-[2px] p-2 text-subtle outline-none transition hover:bg-white/10 hover:text-white"
+                onClick={() => setOrganisationUuid('')}
+                type="button"
+              >
+                <XMarkIcon className="size-4" />
+              </button>
+            ) : null}
           </div>
         ) : null}
         {preMenuNode ? <div className="shrink-0 px-3 pb-3">{preMenuNode}</div> : null}

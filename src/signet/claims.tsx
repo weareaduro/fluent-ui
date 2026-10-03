@@ -1,11 +1,11 @@
 import { BuildingOffice2Icon, CreditCardIcon, KeyIcon, PuzzlePieceIcon, ShieldCheckIcon, TicketIcon, UsersIcon } from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
 
-export const MANAGE_CLAIM = 'signet.manage';
-export const MANAGE_ORGANISATIONS_CLAIM = 'signet.manage-organisations';
+export const MANAGE_CLAIM = 'signet.tenant';
+export const MANAGE_ORGANISATIONS_CLAIM = 'signet.tenant.organisations';
 
 export const managesOrganisations = (clientId: string, claims: readonly string[]): boolean =>
-  claims.includes(`${clientId}.manage-organisations`);
+  clientId === 'signet' ? claims.includes('signet.tenant') : claims.includes(`${clientId}.manage-organisations`);
 export const MANAGE_ORGANISATION_CLAIM = 'signet.organisation.manage';
 export const MANAGE_TEAM_CLAIM = 'signet.organisation.team';
 export const MANAGE_ORGANISATION_USERS_CLAIM = 'signet.organisation.users';
@@ -66,11 +66,18 @@ export const signetTenantAdministrationItems = ({
   clientId?: string;
   organisationSelected: boolean;
 }): NavItem[] => {
-  if (clientId !== 'signet' || organisationSelected || !claims.includes('signet.system.billing')) return [];
+  if (clientId !== 'signet' || organisationSelected) return [];
 
   return [
-    { icon: <CreditCardIcon className="size-5 shrink-0" />, label: 'Billing', to: '/billing' },
-    { icon: <BuildingOffice2Icon className="size-5 shrink-0" />, label: 'Tenant', to: '/tenant' },
+    ...(claims.includes('signet.tenant.users')
+      ? [{ icon: <UsersIcon className="size-5 shrink-0" />, label: 'Team', to: '/team' }]
+      : []),
+    ...(claims.includes('signet.tenant.billing')
+      ? [
+          { icon: <CreditCardIcon className="size-5 shrink-0" />, label: 'Billing', to: '/billing' },
+          { icon: <BuildingOffice2Icon className="size-5 shrink-0" />, label: 'Tenant', to: '/tenant' },
+        ]
+      : []),
   ];
 };
 
@@ -88,17 +95,17 @@ export const signetPlatformItems = ({
 
   return (
     [
-      { claim: 'signet.manage-users', icon: <UsersIcon className="size-5 shrink-0" />, label: 'Users', to: '/users' },
-      { claim: 'signet.manage-roles', icon: <ShieldCheckIcon className="size-5 shrink-0" />, label: 'Roles', to: '/roles' },
+      { claim: 'signet.tenant.users', icon: <UsersIcon className="size-5 shrink-0" />, label: 'Users', to: '/users' },
+      { claim: 'signet.tenant.roles', icon: <ShieldCheckIcon className="size-5 shrink-0" />, label: 'Roles', to: '/roles' },
       {
-        claim: 'signet.manage-organisations',
+        claim: 'signet.tenant.organisations',
         icon: <BuildingOffice2Icon className="size-5 shrink-0" />,
         label: 'Organisations',
         to: '/organisations',
       },
-      { claim: 'signet.manage-claims', icon: <TicketIcon className="size-5 shrink-0" />, label: 'Claims', to: '/claims' },
-      { claim: 'signet.manage-clients', icon: <KeyIcon className="size-5 shrink-0" />, label: 'Clients', to: '/clients' },
-      { claim: 'signet.system.integrations', icon: <PuzzlePieceIcon className="size-5 shrink-0" />, label: 'Integrations', to: '/integrations' },
+      { claim: 'signet.tenant.claims', icon: <TicketIcon className="size-5 shrink-0" />, label: 'Claims', to: '/claims' },
+      { claim: 'signet.tenant.clients', icon: <KeyIcon className="size-5 shrink-0" />, label: 'Clients', to: '/clients' },
+      { claim: 'signet.tenant.integrations', icon: <PuzzlePieceIcon className="size-5 shrink-0" />, label: 'Integrations', to: '/integrations' },
     ] as const
   )
     .filter((item) => claims.includes(item.claim))
@@ -110,7 +117,7 @@ export const roleLabel = (role: string | undefined): string => {
 
   if (value === '') return '';
 
-  if (value === 'super-admin') return 'Super Admin';
+  if (value === 'tenant-manager' || value === 'super-admin') return 'Tenant Manager';
 
   return value.charAt(0).toUpperCase() + value.slice(1);
 };

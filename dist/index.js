@@ -5049,9 +5049,9 @@ var NotificationsMenu = () => {
 // src/signet/claims.tsx
 import { BuildingOffice2Icon, CreditCardIcon, KeyIcon, PuzzlePieceIcon, ShieldCheckIcon, TicketIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { jsx as jsx16 } from "react/jsx-runtime";
-var MANAGE_CLAIM = "signet.manage";
-var MANAGE_ORGANISATIONS_CLAIM = "signet.manage-organisations";
-var managesOrganisations = (clientId, claims) => claims.includes(`${clientId}.manage-organisations`);
+var MANAGE_CLAIM = "signet.tenant";
+var MANAGE_ORGANISATIONS_CLAIM = "signet.tenant.organisations";
+var managesOrganisations = (clientId, claims) => clientId === "signet" ? claims.includes("signet.tenant") : claims.includes(`${clientId}.manage-organisations`);
 var MANAGE_ORGANISATION_CLAIM = "signet.organisation.manage";
 var MANAGE_TEAM_CLAIM = "signet.organisation.team";
 var MANAGE_ORGANISATION_USERS_CLAIM = "signet.organisation.users";
@@ -5082,10 +5082,13 @@ var signetTenantAdministrationItems = ({
   clientId = "signet",
   organisationSelected
 }) => {
-  if (clientId !== "signet" || organisationSelected || !claims.includes("signet.system.billing")) return [];
+  if (clientId !== "signet" || organisationSelected) return [];
   return [
-    { icon: /* @__PURE__ */ jsx16(CreditCardIcon, { className: "size-5 shrink-0" }), label: "Billing", to: "/billing" },
-    { icon: /* @__PURE__ */ jsx16(BuildingOffice2Icon, { className: "size-5 shrink-0" }), label: "Tenant", to: "/tenant" }
+    ...claims.includes("signet.tenant.users") ? [{ icon: /* @__PURE__ */ jsx16(UsersIcon, { className: "size-5 shrink-0" }), label: "Team", to: "/team" }] : [],
+    ...claims.includes("signet.tenant.billing") ? [
+      { icon: /* @__PURE__ */ jsx16(CreditCardIcon, { className: "size-5 shrink-0" }), label: "Billing", to: "/billing" },
+      { icon: /* @__PURE__ */ jsx16(BuildingOffice2Icon, { className: "size-5 shrink-0" }), label: "Tenant", to: "/tenant" }
+    ] : []
   ];
 };
 var signetPlatformItems = ({
@@ -5095,23 +5098,23 @@ var signetPlatformItems = ({
 }) => {
   if (clientId !== "signet" || organisationSelected) return [];
   return [
-    { claim: "signet.manage-users", icon: /* @__PURE__ */ jsx16(UsersIcon, { className: "size-5 shrink-0" }), label: "Users", to: "/users" },
-    { claim: "signet.manage-roles", icon: /* @__PURE__ */ jsx16(ShieldCheckIcon, { className: "size-5 shrink-0" }), label: "Roles", to: "/roles" },
+    { claim: "signet.tenant.users", icon: /* @__PURE__ */ jsx16(UsersIcon, { className: "size-5 shrink-0" }), label: "Users", to: "/users" },
+    { claim: "signet.tenant.roles", icon: /* @__PURE__ */ jsx16(ShieldCheckIcon, { className: "size-5 shrink-0" }), label: "Roles", to: "/roles" },
     {
-      claim: "signet.manage-organisations",
+      claim: "signet.tenant.organisations",
       icon: /* @__PURE__ */ jsx16(BuildingOffice2Icon, { className: "size-5 shrink-0" }),
       label: "Organisations",
       to: "/organisations"
     },
-    { claim: "signet.manage-claims", icon: /* @__PURE__ */ jsx16(TicketIcon, { className: "size-5 shrink-0" }), label: "Claims", to: "/claims" },
-    { claim: "signet.manage-clients", icon: /* @__PURE__ */ jsx16(KeyIcon, { className: "size-5 shrink-0" }), label: "Clients", to: "/clients" },
-    { claim: "signet.system.integrations", icon: /* @__PURE__ */ jsx16(PuzzlePieceIcon, { className: "size-5 shrink-0" }), label: "Integrations", to: "/integrations" }
+    { claim: "signet.tenant.claims", icon: /* @__PURE__ */ jsx16(TicketIcon, { className: "size-5 shrink-0" }), label: "Claims", to: "/claims" },
+    { claim: "signet.tenant.clients", icon: /* @__PURE__ */ jsx16(KeyIcon, { className: "size-5 shrink-0" }), label: "Clients", to: "/clients" },
+    { claim: "signet.tenant.integrations", icon: /* @__PURE__ */ jsx16(PuzzlePieceIcon, { className: "size-5 shrink-0" }), label: "Integrations", to: "/integrations" }
   ].filter((item) => claims.includes(item.claim)).map(({ icon, label, to }) => ({ icon, label, to }));
 };
 var roleLabel = (role) => {
   const value = role?.trim() ?? "";
   if (value === "") return "";
-  if (value === "super-admin") return "Super Admin";
+  if (value === "tenant-manager" || value === "super-admin") return "Tenant Manager";
   return value.charAt(0).toUpperCase() + value.slice(1);
 };
 var displayRole = (membershipRole, userRole) => roleLabel(membershipRole || userRole);
@@ -7484,7 +7487,8 @@ import { Menu as Menu4, MenuButton as MenuButton4, MenuItem as MenuItem4, MenuIt
 import {
   ArrowLeftStartOnRectangleIcon as ArrowLeftStartOnRectangleIcon2,
   ChevronDownIcon as ChevronDownIcon6,
-  Cog6ToothIcon as Cog6ToothIcon2
+  Cog6ToothIcon as Cog6ToothIcon2,
+  XMarkIcon as XMarkIcon5
 } from "@heroicons/react/24/outline";
 import { Link as Link5 } from "@tanstack/react-router";
 import { useState as useState15 } from "react";
@@ -7559,23 +7563,29 @@ var SideNav = ({
         children: [
           /* @__PURE__ */ jsx39("div", { className: "mb-1 flex shrink-0 flex-col items-center justify-center px-4 data-[collapsed=false]:pb-3 data-[collapsed=false]:pt-4 data-[collapsed=true]:h-14", "data-collapsed": collapsed, children: /* @__PURE__ */ jsx39(Link5, { to: homeTo, "aria-label": "Home", className: "inline-flex items-center", children: /* @__PURE__ */ jsx39(AduroEmblem, { className: "h-7 w-auto" }) }) }),
           preSwitcher ? /* @__PURE__ */ jsx39("div", { className: "shrink-0 px-3 pb-2", children: preSwitcher }) : null,
-          showSwitcher && !collapsed ? /* @__PURE__ */ jsx39("div", { className: "px-3 pb-3", children: /* @__PURE__ */ jsxs31(Menu4, { children: [
-            /* @__PURE__ */ jsxs31(MenuButton4, { "aria-label": "Switch organisation", className: "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10", children: [
-              /* @__PURE__ */ jsx39(OrganisationAvatar, { name: currentOrganisation?.name ?? "No organisation", ...currentOrganisation?.website ? { website: currentOrganisation.website } : {} }),
-              /* @__PURE__ */ jsx39("span", { className: "min-w-0 flex-1 truncate text-sm font-semibold text-white", children: currentOrganisation?.name ?? "No organisation" }),
-              /* @__PURE__ */ jsx39(ChevronDownIcon6, { className: "size-4 shrink-0 text-subtle" })
-            ] }),
-            /* @__PURE__ */ jsxs31(MenuItems4, { portal: true, anchor: { to: "bottom start", gap: 6 }, className: "z-50 flex min-w-56 flex-col rounded-[2px] border border-line bg-secondary p-1.5 text-white shadow-xl outline-none", children: [
-              canClearOrganisation ? /* @__PURE__ */ jsx39(MenuItem4, { children: /* @__PURE__ */ jsxs31("button", { type: "button", className: menuItemClassName3, onClick: () => setOrganisationUuid(""), children: [
-                /* @__PURE__ */ jsx39(OrganisationAvatar, { name: "No organisation" }),
-                /* @__PURE__ */ jsx39("span", { className: "min-w-0 flex-1 truncate", children: "No organisation" })
-              ] }) }) : null,
-              organisations.map((organisation) => /* @__PURE__ */ jsx39(MenuItem4, { children: /* @__PURE__ */ jsxs31("button", { type: "button", className: menuItemClassName3, onClick: () => setOrganisationUuid(organisation.uuid), children: [
+          showSwitcher && !collapsed ? /* @__PURE__ */ jsxs31("div", { className: "flex items-center gap-1 px-3 pb-3", children: [
+            /* @__PURE__ */ jsxs31(Menu4, { as: "div", className: "min-w-0 flex-1", children: [
+              /* @__PURE__ */ jsxs31(MenuButton4, { "aria-label": "Switch organisation", className: "flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] bg-secondary px-2 py-2 text-left outline-none transition hover:bg-white/10", children: [
+                currentOrganisation ? /* @__PURE__ */ jsx39(OrganisationAvatar, { name: currentOrganisation.name, ...currentOrganisation.website ? { website: currentOrganisation.website } : {} }) : null,
+                /* @__PURE__ */ jsx39("span", { className: `min-w-0 flex-1 truncate text-sm font-semibold ${currentOrganisation ? "text-white" : "text-subtle"}`, children: currentOrganisation?.name ?? "Please select..." }),
+                /* @__PURE__ */ jsx39(ChevronDownIcon6, { className: "size-4 shrink-0 text-subtle" })
+              ] }),
+              /* @__PURE__ */ jsx39(MenuItems4, { portal: true, anchor: { to: "bottom start", gap: 6 }, className: "z-50 flex min-w-56 flex-col rounded-[2px] border border-line bg-secondary p-1.5 text-white shadow-xl outline-none", children: organisations.map((organisation) => /* @__PURE__ */ jsx39(MenuItem4, { children: /* @__PURE__ */ jsxs31("button", { type: "button", className: menuItemClassName3, onClick: () => setOrganisationUuid(organisation.uuid), children: [
                 /* @__PURE__ */ jsx39(OrganisationAvatar, { name: organisation.name, ...organisation.website ? { website: organisation.website } : {} }),
                 /* @__PURE__ */ jsx39("span", { className: "min-w-0 flex-1 truncate", children: organisation.name })
-              ] }) }, organisation.uuid))
-            ] })
-          ] }) }) : null,
+              ] }) }, organisation.uuid)) })
+            ] }),
+            currentOrganisation && canClearOrganisation ? /* @__PURE__ */ jsx39(
+              "button",
+              {
+                "aria-label": "Clear organisation",
+                className: "rounded-[2px] p-2 text-subtle outline-none transition hover:bg-white/10 hover:text-white",
+                onClick: () => setOrganisationUuid(""),
+                type: "button",
+                children: /* @__PURE__ */ jsx39(XMarkIcon5, { className: "size-4" })
+              }
+            ) : null
+          ] }) : null,
           preMenuNode ? /* @__PURE__ */ jsx39("div", { className: "shrink-0 px-3 pb-3", children: preMenuNode }) : null,
           /* @__PURE__ */ jsxs31("nav", { "aria-label": "Main navigation", className: "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3", children: [
             navigationItems.map((item) => /* @__PURE__ */ jsx39(NavLink2, { collapsed, item }, item.to)),
@@ -7687,7 +7697,7 @@ var TenantPage = () => {
   const tenants = useSignetQuery(["tenants"], signet.listTenants(), true);
   const currentId = tenants.data?.current ?? "";
   const record = tenants.data?.items.find((item) => item.uuid === currentId) ?? tenants.data?.items[0];
-  const canManage = record?.role === "super-admin";
+  const canManage = record?.role === "tenant-manager" || record?.role === "super-admin";
   const mutate = useSignetMutation();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState16(false);
@@ -9030,7 +9040,7 @@ var BillingPage = ({
   const hasBalance = BalanceComponent !== void 0;
   const [section, setSection] = useState23(() => readSection(hasBalance));
   const [addingCard, setAddingCard] = useState23(false);
-  const tenantBilling = organisationUuid === "" && clientId === "signet" && user.claims.includes("signet.system.billing");
+  const tenantBilling = organisationUuid === "" && clientId === "signet" && user.claims.includes("signet.tenant.billing");
   const showSubscription = SubscriptionComponent !== void 0 && tenantBilling;
   const canBill = tenantBilling || (currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false);
   const canFilterClients = clientId === "signet" && (currentOrganisation?.claims.includes("signet.organisation.billing.clients") ?? false);
