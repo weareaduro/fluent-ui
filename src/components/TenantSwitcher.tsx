@@ -8,29 +8,15 @@ import { Input } from './Input';
 import { Modal, ModalFooter } from './Modal';
 import { OrganisationAvatar } from './OrganisationAvatar';
 
-const TENANT_COOKIE = 'signet-current-tenant';
-
+type TenantList = { current: string | null; items: TenantItem[] };
 type TenantItem = { name: string; role: string; uuid: string };
-
-const readTenant = (): string => {
-  const prefix = `${TENANT_COOKIE}=`;
-  const match = document.cookie.split(';').map((part) => part.trim()).find((part) => part.startsWith(prefix));
-
-  return match ? decodeURIComponent(match.slice(prefix.length)) : '';
-};
-
-const writeTenant = (uuid: string): void => {
-  const domain = window.location.hostname.endsWith('aduro.io') ? '; Domain=.aduro.io' : '';
-
-  document.cookie = `${TENANT_COOKIE}=${encodeURIComponent(uuid)}; Path=/; Max-Age=31536000; SameSite=Lax${domain}`;
-};
 
 export const TenantSwitcher = ({ collapsed = false }: { collapsed?: boolean }): ReactElement => {
   const config = useFluentConfig();
   const queryClient = useQueryClient();
-  const tenants = useSignetQuery<{ items: TenantItem[] }>(['tenants'], '/api/resources/tenants', true);
+  const tenants = useSignetQuery<TenantList>(['tenants'], '/api/resources/tenants', true);
   const items = tenants.data?.items ?? [];
-  const current = readTenant();
+  const current = tenants.data?.current ?? '';
   const selected = items.find((item) => item.uuid === current) ?? items[0];
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -47,19 +33,29 @@ export const TenantSwitcher = ({ collapsed = false }: { collapsed?: boolean }): 
 
     if (!sessionId || !tenant || !token) return;
 
-    writeTenant(tenant);
-    void signetJson(config.endpoint, token, `/api/resources/tenants/${tenant}/subscription`, {
+    void signetJson(config.endpoint, token, '/api/resources/tenants/select', {
+      method: 'POST',
+      body: JSON.stringify({ uuid: tenant }),
+    }).then(() => signetJson(config.endpoint, token, `/api/resources/tenants/${tenant}/subscription`, {
       method: 'POST',
       body: JSON.stringify({ sessionId }),
-    }).finally(() => {
+    })).finally(() => {
       window.location.replace('/');
     });
   }, [config]);
 
   const choose = (uuid: string) => {
-    writeTenant(uuid);
-    void queryClient.invalidateQueries({ queryKey: ['signet'] });
-    window.location.assign('/');
+    const token = config.token();
+
+    if (!token) return;
+
+    void signetJson(config.endpoint, token, '/api/resources/tenants/select', {
+      method: 'POST',
+      body: JSON.stringify({ uuid }),
+    }).then(() => {
+      void queryClient.invalidateQueries({ queryKey: ['signet'] });
+      window.location.assign('/');
+    });
   };
 
   const create = async () => {
@@ -86,7 +82,10 @@ export const TenantSwitcher = ({ collapsed = false }: { collapsed?: boolean }): 
         },
       );
 
-      writeTenant(created.tenant.uuid);
+      await signetJson(config.endpoint, token, '/api/resources/tenants/select', {
+        method: 'POST',
+        body: JSON.stringify({ uuid: created.tenant.uuid }),
+      });
 
       if (created.checkoutUrl) {
         window.location.assign(created.checkoutUrl);

@@ -15,6 +15,28 @@ import { FullLoader } from '../components/Loader';
 import { NotificationsProvider, type NotificationGroup } from '../components/Notifications';
 import { managesOrganisations, organisationClaimName } from './claims';
 import { signetJson } from './client';
+import { readScopeCookie, scopeCookieName, writeScopeCookie } from './scopeCookies';
+
+const SHARED_ORGANISATION_COOKIE = 'signet-current-organisation';
+
+const readOrganisationCookie = (clientId: string, legacyKey: string): string => {
+  const name = scopeCookieName(clientId, 'organisation');
+  const current = readScopeCookie(name);
+
+  if (current) return current;
+
+  const legacy = legacyKey !== name && legacyKey !== SHARED_ORGANISATION_COOKIE ? legacyKey : '';
+  const migrated =
+    localStorage.getItem(name) ||
+    (legacy ? readScopeCookie(legacy) || localStorage.getItem(legacy) : '') ||
+    readScopeCookie(SHARED_ORGANISATION_COOKIE) ||
+    localStorage.getItem(SHARED_ORGANISATION_COOKIE) ||
+    '';
+
+  if (migrated) writeScopeCookie(name, migrated);
+
+  return migrated;
+};
 
 export type DirectoryConnection = {
   identifier: string;
@@ -122,17 +144,18 @@ const loadDirectory = async (config: FluentConfig): Promise<{ organisations: Dir
 const DirectoryGate = ({
   children,
   config,
-  storageKey,
+  legacyKey,
 }: {
   children: ReactNode;
   config: FluentConfig;
-  storageKey: string;
+  legacyKey: string;
 }): ReactElement => {
   const directory = useSuspenseQuery({
     queryKey: ['signet', 'directory'],
     queryFn: () => loadDirectory(config),
   });
-  const [organisationUuid, setStoredUuid] = useState(() => localStorage.getItem(storageKey) ?? '');
+  const organisationCookie = scopeCookieName(config.clientId, 'organisation');
+  const [organisationUuid, setStoredUuid] = useState(() => readOrganisationCookie(config.clientId, legacyKey));
   const organisations = directory.data.organisations;
   const canClearOrganisation = managesOrganisations(config.clientId, [
     ...directory.data.user.claims,
@@ -145,10 +168,10 @@ const DirectoryGate = ({
       : (organisations[0]?.uuid ?? '');
   const setOrganisationUuid = useCallback(
     (uuid: string) => {
-      localStorage.setItem(storageKey, uuid);
+      writeScopeCookie(organisationCookie, uuid);
       setStoredUuid(uuid);
     },
-    [storageKey],
+    [organisationCookie],
   );
 
   useEffect(() => {
@@ -223,7 +246,7 @@ export const FluentProvider = ({
             </div>
           }
         >
-          <DirectoryGate config={config} storageKey={organisationStorageKey}>
+          <DirectoryGate config={config} legacyKey={organisationStorageKey}>
             <NotificationsProvider groups={notificationGroups}>{children}</NotificationsProvider>
           </DirectoryGate>
         </Suspense>

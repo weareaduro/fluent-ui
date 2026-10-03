@@ -7,6 +7,7 @@ export type TeamMember = {
   firstName: string | null;
   lastName: string | null;
   role: string;
+  status: string;
   userUuid: string;
 };
 

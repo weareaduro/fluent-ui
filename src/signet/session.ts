@@ -46,7 +46,7 @@ const challengeFor = async (verifier: string): Promise<string> => {
 
 export const signetIssuer = (): string => (auth().signetEndpoint || window.location.origin).replace(/\/$/, '');
 
-const signetClientId = (): string => auth().signetClientId ?? '';
+export const signetClientId = (): string => auth().signetClientId ?? '';
 
 export const signetAccessToken = (): string | null =>
   readCookie(auth().signetAccessCookie) ?? sessionStorage.getItem(TOKEN_KEY);
@@ -62,6 +62,23 @@ export const clearSignetSession = (): void => {
 };
 
 const redirectUri = (): string => `${window.location.origin}/login`;
+
+/** Finish an invitation on the product's register page. The membership already exists. */
+export const completeSignetInvitation = async (token: string, password: string): Promise<string> => {
+  const response = await fetch(`${signetIssuer()}/api/resources/invitations/accept`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ password, token }),
+  });
+  const payload = (await response.json()) as { email?: string; error?: string };
+
+  if (!response.ok || !payload.email) {
+    throw new Error(payload.error ?? 'Invitation could not be completed');
+  }
+
+  return payload.email;
+};
 
 export const signInWithSignetPassword = async (email: string, password: string): Promise<void> => {
   const response = await fetch(`${signetIssuer()}/oauth/token`, {

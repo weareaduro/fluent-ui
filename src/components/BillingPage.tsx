@@ -11,7 +11,7 @@ import { PaymentMethodsList, type PaymentMethodCard } from './PaymentMethodsList
 import { TransactionsList } from './TransactionsList';
 import { XeroInvoicesList, type XeroInvoice } from './XeroInvoicesList';
 
-type Section = 'balance' | 'invoices' | 'payment-methods' | 'transactions';
+type Section = 'balance' | 'invoices' | 'payment-methods' | 'subscription' | 'transactions';
 
 type InvoiceResponse = {
   clients?: string[];
@@ -46,6 +46,10 @@ const readSection = (hasBalance: boolean): Section => {
     return 'balance';
   }
 
+  if (window.location.hash === '#subscription' || window.location.pathname.endsWith('/subscription')) {
+    return 'subscription';
+  }
+
   if (window.location.hash === '#payment-methods' || window.location.pathname.endsWith('/payment-methods')) {
     return 'payment-methods';
   }
@@ -66,6 +70,8 @@ const sectionUrl = (next: Section): string => {
     path === '/billing/transactions';
 
   if (next === 'balance') return nested ? '/billing/balance' : '/billing#balance';
+
+  if (next === 'subscription') return `${path}#subscription`;
 
   if (next === 'payment-methods') return nested ? '/billing/payment-methods' : '/billing#payment-methods';
 
@@ -268,7 +274,13 @@ const AddCardModal = ({
   );
 };
 
-export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: ComponentType }): ReactElement => {
+export const BillingPage = ({
+  BalanceComponent,
+  SubscriptionComponent,
+}: {
+  BalanceComponent?: ComponentType;
+  SubscriptionComponent?: ComponentType;
+}): ReactElement => {
   const { clientId } = useFluentConfig();
   const { currentOrganisation, organisationUuid, user } = useDirectory();
   const mutate = useSignetMutation();
@@ -277,6 +289,8 @@ export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: Component
   const [section, setSection] = useState<Section>(() => readSection(hasBalance));
   const [addingCard, setAddingCard] = useState(false);
   const tenantBilling = organisationUuid === '' && clientId === 'signet' && user.claims.includes('signet.system.billing');
+  const showSubscription =
+    SubscriptionComponent !== undefined && clientId === 'signet' && user.claims.includes('signet.system.billing');
   const canBill = tenantBilling || (currentOrganisation?.claims.includes(`${clientId}.organisation.billing`) ?? false);
   const canFilterClients =
     clientId === 'signet' && (currentOrganisation?.claims.includes('signet.organisation.billing.clients') ?? false);
@@ -350,6 +364,11 @@ export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: Component
               Balance
             </button>
           ) : null}
+          {showSubscription ? (
+            <button type="button" className={sideNavItemClassName(section === 'subscription')} onClick={() => choose('subscription')}>
+              Subscription
+            </button>
+          ) : null}
           <button type="button" className={sideNavItemClassName(payments)} onClick={() => choose('payment-methods')}>
             Payment Methods
           </button>
@@ -366,6 +385,7 @@ export const BillingPage = ({ BalanceComponent }: { BalanceComponent?: Component
             />
           ) : null}
           {ready && section === 'balance' && BalanceComponent ? <BalanceComponent /> : null}
+          {showSubscription && section === 'subscription' && SubscriptionComponent ? <SubscriptionComponent /> : null}
           {ready && transactions ? (
             <TransactionsList
               appClientId={clientId}

@@ -97,13 +97,6 @@ const emptyToNull = (value: string): string | null => {
 const menuItemClassName =
   'flex w-full cursor-pointer items-center gap-2.5 rounded-[2px] px-2.5 py-2.5 text-left text-sm font-semibold text-subtle data-focus:bg-white/5 data-focus:text-white';
 
-const readTenant = (): string => {
-  const prefix = 'signet-current-tenant=';
-  const match = document.cookie.split(';').map((part) => part.trim()).find((part) => part.startsWith(prefix));
-
-  return match ? decodeURIComponent(match.slice(prefix.length)) : '';
-};
-
 const OrgField = ({
   Icon,
   label,
@@ -123,8 +116,8 @@ const OrgField = ({
 );
 
 export const TenantPage = (): ReactElement => {
-  const tenants = useSignetQuery<{ items: Tenant[] }>(['tenants'], '/api/resources/tenants', true);
-  const currentId = readTenant();
+  const tenants = useSignetQuery<{ current: string | null; items: Tenant[] }>(['tenants'], '/api/resources/tenants', true);
+  const currentId = tenants.data?.current ?? '';
   const record = tenants.data?.items.find((item) => item.uuid === currentId) ?? tenants.data?.items[0];
   const canManage = record?.role === 'super-admin';
   const mutate = useSignetMutation();

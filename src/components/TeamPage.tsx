@@ -85,6 +85,11 @@ export const TeamPage = ({
         columns={[
           { cell: (member) => member.email, header: 'Email', key: 'email' },
           {
+            cell: (member) => (member.status === 'invited' ? 'Invited' : 'Active'),
+            header: 'Status',
+            key: 'status',
+          },
+          {
             cell: (member) => (
               <Select
                 name={`member-role-${member.userUuid}`}

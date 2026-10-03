@@ -1,5 +1,6 @@
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { useForm } from '@tanstack/react-form';
+import { Link } from '@tanstack/react-router';
 import { useState, type ReactElement, type ReactNode } from 'react';
 import { AuthFrame, AuthTitle } from './AuthFrame';
 import { Button } from './Button';
@@ -105,6 +106,9 @@ export const SignInScreen = ({
               type: 'primary',
             }}
           />
+          <Link className="block text-center text-sm text-orange-100" to="/forgot-password">
+            Forgot password?
+          </Link>
           {error ? <p className="text-center text-sm text-red-400">{error}</p> : null}
         </form>
       </AuthFrame>

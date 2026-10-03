@@ -71,6 +71,10 @@ export { SignInScreen } from './components/SignInScreen';
 
 export { LoginPage } from './components/LoginPage';
 
+export { RegisterPage } from './components/RegisterPage';
+
+export { ForgotPasswordPage } from './components/ForgotPasswordPage';
+
 export { AduroEmblem } from './components/AduroEmblem';
 
 export { AppFrame, PageHeader, type AppNavItem } from './components/AppFrame';
@@ -115,8 +119,10 @@ export { useSignIn } from './signet/useSignIn';
 export {
   bindSignetAuth,
   clearSignetSession,
+  completeSignetInvitation,
   completeSignetLogin,
   signetAccessToken,
+  signetClientId,
   signetIssuer,
   signInWithSignetPassword,
   startSignetLogin,
