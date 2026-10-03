@@ -566,7 +566,7 @@ export const performSignet = async <T>({
   tenantId,
   token,
 }: {
-  credentials?: RequestCredentials;
+  credentials?: 'include' | 'omit' | 'same-origin';
   endpoint: string;
   operation: SignetOperation;
   tenantId?: string;
@@ -580,7 +580,7 @@ export const performSignet = async <T>({
 
   if (tenantId) headers.set('cookie', `signet-tenant=${encodeURIComponent(tenantId)}`);
 
-  let body: BodyInit | undefined;
+  let body: string | URLSearchParams | undefined;
 
   if (request.form) {
     headers.set('content-type', 'application/x-www-form-urlencoded');
