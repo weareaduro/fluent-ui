@@ -1,7 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ArrowDownTrayIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useState, type ReactElement } from 'react';
-import { useSignetMutation, useSignetQuery } from '../signet/provider';
+import { useDirectory, useSignetMutation, useSignetQuery } from '../signet/provider';
 import { FullLoader } from './Loader';
 import { Input } from './Input';
 import { Pill } from './Pill';
@@ -54,6 +54,14 @@ const money = (amount: number): string =>
   `£${Math.abs(amount).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const isoDate = (date: Date): string => date.toISOString().slice(0, 10);
+
+const formatExportDate = (iso: string): string =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 
 const periodRange = (period: Period): { from?: string; to?: string } => {
   if (period === 'all') return {};
@@ -117,6 +125,7 @@ export const TransactionsList = ({
 
   if (range.to) params.set('to', range.to);
 
+  const { currentOrganisation } = useDirectory();
   const mutate = useSignetMutation();
   const result = useSignetQuery<TransactionResponse>(
     ['billing-transactions', organisationUuid, params.toString()],
@@ -195,7 +204,12 @@ export const TransactionsList = ({
                 type="button"
                 className="w-full rounded-[2px] px-2.5 py-2 text-left text-sm hover:bg-white/5"
                 onClick={() => {
-                  void exportRows().then((exported) => downloadPdf('transactions.pdf', 'Transactions', headers, exported));
+                  void exportRows().then((exported) =>
+                    downloadPdf('transactions.pdf', 'Transactions', headers, exported, {
+                      organisationName: currentOrganisation?.name ?? 'Organisation',
+                      periodLabel: range.from && range.to ? `${formatExportDate(range.from)} – ${formatExportDate(range.to)}` : 'All time',
+                    }),
+                  );
                 }}
               >
                 PDF

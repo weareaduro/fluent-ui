@@ -1,6 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ArrowDownTrayIcon, ArrowTopRightOnSquareIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useState, type ReactElement } from 'react';
+import { useDirectory } from '../signet/provider';
 import { Input } from './Input';
 import { Pill } from './Pill';
 import { Select } from './Select';
@@ -40,6 +41,7 @@ export const XeroInvoicesList = ({
   invoices: XeroInvoice[];
   onClientChange?: (client: string) => void;
 }): ReactElement => {
+  const { currentOrganisation } = useDirectory();
   const [query, setQuery] = useState('');
   const [provider, setProvider] = useState('');
   const [page, setPage] = useState(1);
@@ -89,7 +91,9 @@ export const XeroInvoicesList = ({
                 type="button"
                 className="w-full rounded-[2px] px-2.5 py-2 text-left text-sm hover:bg-white/5"
                 onClick={() => {
-                  void downloadPdf('invoices.pdf', 'Invoices', headers, exportRows);
+                  void downloadPdf('invoices.pdf', 'Invoices', headers, exportRows, {
+                    organisationName: currentOrganisation?.name ?? 'Organisation',
+                  });
                 }}
               >
                 PDF
