@@ -1,19 +1,19 @@
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import type { ReactElement, ReactNode } from 'react';
-import logo from '../logo.svg';
+import { AduroEmblem } from './AduroEmblem';
 import { ProductLockup, sidebarLabelClassName } from './ProductLockup';
 
 export const AuthFrame = ({
   children,
   emphasizeProduct = true,
   footer,
-  logoSrc,
   onBack,
   productName,
 }: {
   children: ReactNode;
   emphasizeProduct?: boolean | undefined;
   footer?: ReactNode | undefined;
+  /** Accepted so existing apps can keep passing a wordmark. The emblem is the mark. */
   logoSrc?: string | undefined;
   onBack?: (() => void) | undefined;
   productName: string;
@@ -34,7 +34,7 @@ export const AuthFrame = ({
           ) : null}
         </div>
         <span className="inline-flex flex-col items-center">
-          <img src={logoSrc ?? logo} alt="" className="h-8 w-auto" />
+          <AduroEmblem className="h-12 w-auto" />
           <ProductLockup
             className={`mt-3 ${sidebarLabelClassName}`}
             emphasizeProduct={emphasizeProduct}

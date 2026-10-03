@@ -20,5 +20,8 @@ await build({
     '@heroicons/react/24/outline',
     'react-tooltip',
     'classnames',
+    '@react-pdf/renderer',
+    '@stripe/react-stripe-js',
+    '@stripe/stripe-js',
   ],
 });

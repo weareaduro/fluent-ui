@@ -2,8 +2,8 @@ type HeroIconType =
   | React.ForwardRefExoticComponent<
       Omit<React.SVGProps<SVGSVGElement>, 'ref'> &
         React.RefAttributes<SVGSVGElement> & {
-          title?: string;
-          titleId?: string;
+          title?: string | undefined;
+          titleId?: string | undefined;
         }
     >
-  | React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+  | ((props: React.SVGProps<SVGSVGElement>) => React.ReactElement | null);

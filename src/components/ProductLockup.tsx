@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 /** Sidebar "Administration" and "Product by Aduro": 14px / 20px, uppercase, weight 700. */
 export const sidebarLabelClassName =
@@ -12,10 +12,10 @@ export const ProductLockup = ({
 }: {
   className?: string;
   emphasizeProduct?: boolean;
-  productName: string;
+  productName: ReactNode;
 }): ReactElement => (
   <span className={className}>
-    {emphasizeProduct ? (
+    {emphasizeProduct && typeof productName === 'string' ? (
       <span className="inline-block bg-primary-main bg-clip-text text-transparent [-webkit-text-fill-color:transparent]">
         {productName}
       </span>

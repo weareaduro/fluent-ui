@@ -15,7 +15,7 @@ export function DataTable<Row>({
   rowKey,
 }: {
   columns: Array<DataColumn<Row>>;
-  empty?: string;
+  empty?: ReactNode;
   pageSize?: number;
   rowKey: (row: Row) => string;
   rows: Row[];
@@ -28,13 +28,17 @@ export function DataTable<Row>({
   const width = columns.length === 0 ? 100 : Math.floor(100 / columns.length);
 
   return (
-    <TableContainer flush className="min-h-[320px]">
+    <TableContainer flush className="min-h-0 flex-1">
       <TableColumns
         widthType="pc"
         columns={columns.map((column) => ({ heading: column.header, width }))}
       />
       {visible.length === 0 ? (
-        <p className="px-5 py-6 text-sm text-subtle">{empty}</p>
+        typeof empty === 'string' ? (
+          <p className="px-5 py-6 text-sm text-subtle">{empty}</p>
+        ) : (
+          empty
+        )
       ) : (
         <TableRows
           widthType="pc"

@@ -6,18 +6,11 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link } from '@tanstack/react-router';
 import { useState, type ReactElement, type ReactNode } from 'react';
-import logo from '../logo.svg';
+import { AppHeader, type AppHeaderButton, type AppHeaderCrumb } from './AppHeader';
+import { AduroEmblem } from './AduroEmblem';
 import { OrganisationAvatar } from './OrganisationAvatar';
 import { PersonAvatar } from './PersonAvatar';
-import { ProductLockup, sidebarLabelClassName } from './ProductLockup';
-
-const AduroMark = ({ className = 'h-5 w-auto' }: { className?: string }): ReactElement => (
-  <svg width="33" height="29" viewBox="0 0 33 29" fill="none" aria-hidden="true" className={className}>
-    <path d="M8.40666 22.4259L15.6041 9.9563C15.6488 9.87583 15.6756 9.78642 15.6756 9.69403V1.27764C15.6756 0.74118 14.9633 0.55044 14.6951 1.01537L0.0737181 26.3391C-0.19749 26.807 0.333005 27.3315 0.797933 27.0513L8.22188 22.6107C8.29937 22.566 8.36196 22.5004 8.40666 22.4229V22.4259Z" fill="white" />
-    <path d="M16.8225 9.96206L24.0647 22.5062C24.1094 22.5837 24.1749 22.6492 24.2524 22.6969L31.6346 27.0601C32.0996 27.3343 32.6271 26.8127 32.3559 26.3448L17.7315 1.01219C17.4633 0.547267 16.751 0.738006 16.751 1.27446V9.69682C16.751 9.7892 16.7748 9.87861 16.8225 9.95908V9.96206Z" fill="white" />
-    <path d="M23.3771 23.5137H8.95834C8.86297 23.5137 8.77058 23.5405 8.69011 23.5882L1.68937 27.7755C1.2304 28.0497 1.4271 28.7531 1.96057 28.7531H30.4613C30.9947 28.7531 31.1885 28.0467 30.7295 27.7755L23.6483 23.5882C23.5678 23.5405 23.4754 23.5137 23.3801 23.5137H23.3771Z" fill="white" />
-  </svg>
-);
+import { sidebarLabelClassName } from './ProductLockup';
 
 export type AppNavItem = {
   Icon?: HeroIconType | undefined;
@@ -184,9 +177,7 @@ export const AppFrame = ({
   children,
   footerItems = [],
   items,
-  logoSrc,
   organisations,
-  productName,
 }: {
   account?: {
     email?: string | undefined;
@@ -198,13 +189,11 @@ export const AppFrame = ({
   children: ReactNode;
   footerItems?: AppNavItem[] | undefined;
   items: AppNavItem[];
-  logoSrc?: string | undefined;
   organisations?: {
     onChange: (value: string) => void;
     options: AppOrganisation[];
     value: string;
   };
-  productName: string;
 }): ReactElement => {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -215,20 +204,11 @@ export const AppFrame = ({
         className="flex h-full shrink-0 flex-col border-r border-line bg-primary transition-all duration-150 data-[collapsed=false]:w-60 data-[collapsed=true]:w-[65px]"
       >
         <div
-          className="flex shrink-0 flex-col items-center justify-center px-4 data-[collapsed=false]:pb-3 data-[collapsed=false]:pt-4 data-[collapsed=true]:h-14"
+          className="mb-1 flex shrink-0 flex-col items-center justify-center px-4 data-[collapsed=false]:pb-3 data-[collapsed=false]:pt-4 data-[collapsed=true]:h-14"
           data-collapsed={collapsed}
         >
-          <Link
-            to="/"
-            aria-label={`${productName} by Aduro`}
-            className="inline-flex flex-col items-center gap-1.5"
-          >
-            {collapsed ? (
-              <AduroMark className="h-5 w-auto" />
-            ) : (
-              <img src={logoSrc ?? logo} alt="" className="h-5 w-auto" />
-            )}
-            {collapsed ? null : <ProductLockup productName={productName} />}
+          <Link to="/" aria-label="Home" className="inline-flex items-center">
+            <AduroEmblem className="h-7 w-auto" />
           </Link>
         </div>
         {organisations && organisations.options.length > 0 && !collapsed ? (
@@ -295,14 +275,11 @@ export const AppFrame = ({
 };
 
 export const PageHeader = ({
-  actions,
+  button,
+  crumb,
   title,
 }: {
-  actions?: ReactNode;
+  button?: AppHeaderButton | undefined;
+  crumb?: AppHeaderCrumb | undefined;
   title: string;
-}): ReactElement => (
-  <div className="flex items-center justify-between gap-4 border-b border-grey-700t px-6 py-4">
-    <h1 className="truncate font-grotesque text-[30px] font-semibold leading-9 text-white">{title}</h1>
-    {actions}
-  </div>
-);
+}): ReactElement => <AppHeader button={button} crumb={crumb} title={title} />;
