@@ -30,7 +30,7 @@ export const loadSignetProviders = async (issuer: string): Promise<string[]> => 
   if (endpoint === '') return [];
 
   try {
-    const response = await fetch(`${endpoint}/oauth/providers`);
+    const response = await fetch(`${endpoint}/oauth/providers`, { credentials: 'include' });
 
     if (!response.ok) return [];
 

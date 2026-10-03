@@ -5998,7 +5998,7 @@ var loadSignetProviders = async (issuer) => {
   const endpoint = issuer.replace(/\/$/, "");
   if (endpoint === "") return [];
   try {
-    const response = await fetch(`${endpoint}/oauth/providers`);
+    const response = await fetch(`${endpoint}/oauth/providers`, { credentials: "include" });
     if (!response.ok) return [];
     const body = await response.json();
     if (!Array.isArray(body.providers)) return [];
