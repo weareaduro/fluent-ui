@@ -6,4 +6,11 @@ type HeroIconType =
           titleId?: string | undefined;
         }
     >
+  | React.ForwardRefExoticComponent<
+      Omit<React.SVGProps<SVGSVGElement>, 'ref'> &
+        React.RefAttributes<SVGSVGElement> & {
+          title?: string;
+          titleId?: string;
+        }
+    >
   | ((props: React.SVGProps<SVGSVGElement>) => React.ReactElement | null);

@@ -16,8 +16,6 @@ import { IconButton } from './IconButton';
 import { useFieldVariant } from './FieldVariantContext';
 import { useState } from 'react';
 
-type HeroIconType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-
 type Option<T> = { label: string; value: T; group?: string };
 
 interface Props<T extends string> {
